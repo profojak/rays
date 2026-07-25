@@ -11,6 +11,7 @@
       let
         pkgs = import nixpkgs { inherit system; };
         llvm = pkgs.llvmPackages_latest;
+        libcxx = if pkgs.stdenv.isDarwin then pkgs.darwin.libcxx else llvm.libcxx.dev;
       in
       {
         devShells.default = (pkgs.mkShell.override { stdenv = llvm.libcxxStdenv; }) {
@@ -20,6 +21,8 @@
             pkgs.cmake
             pkgs.ninja
           ];
+
+          CXXFLAGS = "-isystem ${libcxx}/include/c++/v1";
 
           shellHook = ''
             echo "  $(clang --version | head -n1)"
