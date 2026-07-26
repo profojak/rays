@@ -15,15 +15,16 @@ namespace rays {
 
 export template <std::floating_point T, std::size_t N> struct Vector {
 
-  std::array<T, N> data{};
+    std::array<T, N> data{};
 
-  template <typename Self> [[nodiscard]] auto View(this Self &&self) noexcept {
-    using element_type =
-        std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                           const T, T>;
-    return std::mdspan<element_type, std::extents<std::size_t, N>>(
-        std::forward<Self>(self).data.data());
-  }
+    template <typename Self>
+    [[nodiscard]] auto View(this Self &&self) noexcept {
+        using element_type =
+            std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
+                               const T, T>;
+        return std::mdspan<element_type, std::extents<std::size_t, N>>(
+            std::forward<Self>(self).data.data());
+    }
 };
 
 } // namespace rays
