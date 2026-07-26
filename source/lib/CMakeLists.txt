@@ -10,8 +10,8 @@ target_sources(rays
         FILES
             rays.cppm
             ../core/camera/camera.cppm
-            ../core/camera/pixel.cpp
-            ../core/camera/film.cpp
+            ../core/camera/pixel.cppm
+            ../core/camera/film.cppm
     PRIVATE
         ../core/api.cpp
         ../core/linalg.cpp
