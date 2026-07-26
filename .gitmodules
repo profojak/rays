@@ -1,3 +1,6 @@
 [submodule "deps/stdBLAS"]
 	path = deps/stdBLAS
 	url = https://github.com/kokkos/stdBLAS
+[submodule "deps/SDL"]
+	path = deps/SDL
+	url = https://github.com/libsdl-org/SDL.git
