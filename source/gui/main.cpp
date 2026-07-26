@@ -1,5 +1,9 @@
 #include <SDL3/SDL.h>
 
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
+
 import rays;
 
 int main() {
@@ -25,18 +29,41 @@ int main() {
     return 1;
   }
 
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGui::GetIO().IniFilename = nullptr;
+  ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
+  ImGui_ImplSDLRenderer3_Init(renderer);
+
   bool running = true;
   while (running) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
+      ImGui_ImplSDL3_ProcessEvent(&event);
       if (event.type == SDL_EVENT_QUIT) {
         running = false;
       }
     }
 
+    ImGui_ImplSDL3_NewFrame();
+    ImGui_ImplSDLRenderer3_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::SetNextWindowPos({16, 16}, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({240, 80}, ImGuiCond_FirstUseEver);
+    ImGui::Begin("Chaos");
+    ImGui::TextUnformatted("Hello, Chaos!");
+    ImGui::End();
+
+    ImGui::Render();
     SDL_RenderClear(renderer);
+    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
     SDL_RenderPresent(renderer);
   }
+
+  ImGui_ImplSDLRenderer3_Shutdown();
+  ImGui_ImplSDL3_Shutdown();
+  ImGui::DestroyContext();
 
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
