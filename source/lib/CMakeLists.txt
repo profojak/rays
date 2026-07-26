@@ -15,6 +15,9 @@ target_sources(rays
 
             ../core/math/math.cppm
             ../core/math/vector.cppm
+
+            ../core/util/util.cppm
+            ../core/util/concepts.cppm
     PRIVATE
         ../core/api.cpp
         ../core/linalg.cpp
