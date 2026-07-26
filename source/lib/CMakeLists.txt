@@ -12,6 +12,9 @@ target_sources(rays
             ../core/camera/camera.cppm
             ../core/camera/pixel.cppm
             ../core/camera/film.cppm
+
+            ../core/math/math.cppm
+            ../core/math/vector.cppm
     PRIVATE
         ../core/api.cpp
         ../core/linalg.cpp
