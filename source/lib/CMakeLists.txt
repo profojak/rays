@@ -10,22 +10,16 @@ target_sources(rays
         FILES
             rays.cppm
             ../core/camera/camera.cppm
-)
-
-target_sources(rays
+            ../core/camera/pixel.cpp
+            ../core/camera/film.cpp
     PRIVATE
         ../core/api.cpp
         ../core/linalg.cpp
-        ../core/camera/camera.cpp
-        ../core/camera/film.cpp
 )
 
 target_include_directories(rays
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-target_include_directories(rays
     PRIVATE
         ${CMAKE_BINARY_DIR}/deps/stdBLAS/include/experimental
 )
