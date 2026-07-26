@@ -14,6 +14,8 @@ target_sources(rays
             ../core/camera/film.cppm
 
             ../core/math/math.cppm
+            ../core/math/bounds.cppm
+            ../core/math/point.cppm
             ../core/math/vector.cppm
 
             ../core/util/util.cppm
