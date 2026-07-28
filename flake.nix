@@ -11,7 +11,7 @@
       let
         pkgs = import nixpkgs { inherit system; };
         llvm = pkgs.llvmPackages_latest;
-        stdenv = if pkgs.stdenv.isDarwin then pkgs.darwin else llvm.libcxxStdenv;
+        stdenv = if pkgs.stdenv.isDarwin then pkgs.stdenv else llvm.libcxxStdenv;
         sdl-runtime = pkgs.lib.optionals (!pkgs.stdenv.isDarwin) ([
           pkgs.wayland
           pkgs.libxkbcommon
@@ -37,6 +37,8 @@
         } // pkgs.lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath sdl-runtime;
           SDL_RENDER_DRIVER = "vulkan";
+        } // pkgs.lib.optionalAttrs (pkgs.stdenv.isDarwin) {
+          CXXFLAGS = "-isystem ${pkgs.darwin.libcxx}/include/c++/v1";
         });
       }
     );
