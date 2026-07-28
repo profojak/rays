@@ -14,6 +14,9 @@ target_sources(rays
             math/point.cppm
             math/vector.cppm
 
+            render/scheduler.cppm
+            render/tile.cppm
+
             utility/concepts.cppm
     PRIVATE
         rays.cpp
