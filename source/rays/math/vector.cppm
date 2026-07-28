@@ -13,10 +13,13 @@ export module rays:vector;
 
 namespace rays {
 
+/// Linear algebra vector.
 export template <std::floating_point T, std::size_t N> struct Vector {
 
+    /// Vector data.
     std::array<T, N> data{};
 
+    /// Return `mdspan` view of vector data.
     template <typename Self>
     [[nodiscard]] auto View(this Self &&self) noexcept {
         using element_type =

@@ -14,10 +14,13 @@ import :concepts;
 
 namespace rays {
 
+/// Point in space.
 export template <arithmetic T, std::size_t N> struct Point {
 
+    /// Point data.
     std::array<T, N> data{};
 
+    /// Return `mdspan` view of point data.
     template <typename Self>
     [[nodiscard]] auto View(this Self &&self) noexcept {
         using element_type =
