@@ -10,7 +10,7 @@ module;
 
 export module rays:point;
 
-import :util;
+import :concepts;
 
 namespace rays {
 

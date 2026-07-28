@@ -27,4 +27,6 @@ export template <std::floating_point T, std::size_t N> struct Vector {
     }
 };
 
+export using Vector3f = Vector<float, 3>;
+
 } // namespace rays

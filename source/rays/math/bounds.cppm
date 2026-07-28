@@ -4,8 +4,7 @@ module;
 
 export module rays:bounds;
 
-import :util;
-
+import :concepts;
 import :point;
 
 namespace rays {

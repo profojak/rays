@@ -23,6 +23,6 @@ set(LINALG_ENABLE_BLAS OFF CACHE BOOL "" FORCE)
 set(LINALG_ENABLE_TBB OFF CACHE BOOL "" FORCE)
 add_subdirectory(deps/stdBLAS)
 
-add_subdirectory(source/lib)
+add_subdirectory(source/rays)
 add_subdirectory(source/cli)
 add_subdirectory(source/gui)
