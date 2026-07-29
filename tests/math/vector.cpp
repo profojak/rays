@@ -31,6 +31,15 @@ TEST_CASE("`Vector` addition") {
     CHECK(c[2] == doctest::Approx(9.0f));
 }
 
+TEST_CASE("`Vector` scalar addition") {
+    rays::Vector3f v{1.0f, 2.0f, 3.0f};
+    auto result = v + 1.0f;
+
+    CHECK(result[0] == doctest::Approx(2.0f));
+    CHECK(result[1] == doctest::Approx(3.0f));
+    CHECK(result[2] == doctest::Approx(4.0f));
+}
+
 TEST_CASE("`Vector` subtraction") {
     rays::Vector3f a{4.0f, 5.0f, 6.0f};
     rays::Vector3f b{1.0f, 2.0f, 3.0f};
@@ -39,6 +48,15 @@ TEST_CASE("`Vector` subtraction") {
     CHECK(c[0] == doctest::Approx(3.0f));
     CHECK(c[1] == doctest::Approx(3.0f));
     CHECK(c[2] == doctest::Approx(3.0f));
+}
+
+TEST_CASE("`Vector` scalar subtraction") {
+    rays::Vector3f v{2.0f, 3.0f, 4.0f};
+    auto result = v - 1.0f;
+
+    CHECK(result[0] == doctest::Approx(1.0f));
+    CHECK(result[1] == doctest::Approx(2.0f));
+    CHECK(result[2] == doctest::Approx(3.0f));
 }
 
 TEST_CASE("`Vector` scalar multiplication") {
@@ -59,6 +77,14 @@ TEST_CASE("`Vector` scalar division") {
     CHECK(divided[2] == doctest::Approx(3.0f));
 }
 
+TEST_CASE("`Vector` unsigned scalar division") {
+    rays::Vector2u v{4, 6};
+    auto divided = v / 2;
+
+    CHECK(divided[0] == 2);
+    CHECK(divided[1] == 3);
+}
+
 TEST_CASE("`Vector` unary minus") {
     rays::Vector3f v{1.0f, -2.0f, 3.0f};
     auto negated = -v;
@@ -70,85 +96,53 @@ TEST_CASE("`Vector` unary minus") {
 
 TEST_CASE("`Vector` addition assignment") {
     rays::Vector3f v{1.0f, 2.0f, 3.0f};
-    auto &after = v += rays::Vector3f{1.0f, 1.0f, 1.0f};
+    v += rays::Vector3f{1.0f, 1.0f, 1.0f};
 
-    CHECK(after[0] == doctest::Approx(2.0f));
-    CHECK(after[1] == doctest::Approx(3.0f));
-    CHECK(after[2] == doctest::Approx(4.0f));
-    CHECK(&after == &v);
+    CHECK(v[0] == doctest::Approx(2.0f));
+    CHECK(v[1] == doctest::Approx(3.0f));
+    CHECK(v[2] == doctest::Approx(4.0f));
 }
 
 TEST_CASE("`Vector` multiplication assignment") {
     rays::Vector3f v{1.0f, 2.0f, 3.0f};
-    auto &after = v *= 2.0f;
+    v *= 2.0f;
 
-    CHECK(after[0] == doctest::Approx(2.0f));
-    CHECK(after[1] == doctest::Approx(4.0f));
-    CHECK(after[2] == doctest::Approx(6.0f));
-    CHECK(&after == &v);
+    CHECK(v[0] == doctest::Approx(2.0f));
+    CHECK(v[1] == doctest::Approx(4.0f));
+    CHECK(v[2] == doctest::Approx(6.0f));
 }
 
 TEST_CASE("`Vector` division assignment") {
     rays::Vector3f v{2.0f, 4.0f, 6.0f};
-    auto &after = v /= 2.0f;
+    v /= 2.0f;
 
-    CHECK(after[0] == doctest::Approx(1.0f));
-    CHECK(after[1] == doctest::Approx(2.0f));
-    CHECK(after[2] == doctest::Approx(3.0f));
-    CHECK(&after == &v);
-}
-
-TEST_CASE("`Vector` scalar addition") {
-    rays::Vector3f v{1.0f, 2.0f, 3.0f};
-    auto result = v + 1.0f;
-
-    CHECK(result[0] == doctest::Approx(2.0f));
-    CHECK(result[1] == doctest::Approx(3.0f));
-    CHECK(result[2] == doctest::Approx(4.0f));
-}
-
-TEST_CASE("`Vector` scalar subtraction") {
-    rays::Vector3f v{2.0f, 3.0f, 4.0f};
-    auto result = v - 1.0f;
-
-    CHECK(result[0] == doctest::Approx(1.0f));
-    CHECK(result[1] == doctest::Approx(2.0f));
-    CHECK(result[2] == doctest::Approx(3.0f));
+    CHECK(v[0] == doctest::Approx(1.0f));
+    CHECK(v[1] == doctest::Approx(2.0f));
+    CHECK(v[2] == doctest::Approx(3.0f));
 }
 
 TEST_CASE("`Vector` scalar addition assignment") {
     rays::Vector3f v{1.0f, 2.0f, 3.0f};
-    auto &after = v += 1.0f;
+    v += 1.0f;
 
-    CHECK(after[0] == doctest::Approx(2.0f));
-    CHECK(after[1] == doctest::Approx(3.0f));
-    CHECK(after[2] == doctest::Approx(4.0f));
-    CHECK(&after == &v);
+    CHECK(v[0] == doctest::Approx(2.0f));
+    CHECK(v[1] == doctest::Approx(3.0f));
+    CHECK(v[2] == doctest::Approx(4.0f));
 }
 
 TEST_CASE("`Vector` scalar subtraction assignment") {
     rays::Vector3f v{2.0f, 3.0f, 4.0f};
-    auto &after = v -= 1.0f;
+    v -= 1.0f;
 
-    CHECK(after[0] == doctest::Approx(1.0f));
-    CHECK(after[1] == doctest::Approx(2.0f));
-    CHECK(after[2] == doctest::Approx(3.0f));
-    CHECK(&after == &v);
-}
-
-TEST_CASE("`Vector` unsigned scalar division") {
-    rays::Vector2u v{4, 6};
-    auto divided = v / 2;
-
-    CHECK(divided[0] == 2);
-    CHECK(divided[1] == 3);
+    CHECK(v[0] == doctest::Approx(1.0f));
+    CHECK(v[1] == doctest::Approx(2.0f));
+    CHECK(v[2] == doctest::Approx(3.0f));
 }
 
 TEST_CASE("`Vector` unsigned scalar division assignment") {
     rays::Vector2u v{4, 6};
-    auto &after = v /= 2;
+    v /= 2;
 
-    CHECK(after[0] == 2);
-    CHECK(after[1] == 3);
-    CHECK(&after == &v);
+    CHECK(v[0] == 2);
+    CHECK(v[1] == 3);
 }

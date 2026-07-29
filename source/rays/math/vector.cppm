@@ -91,13 +91,13 @@ export template <arithmetic T, std::size_t N> struct Vector {
     }
 
     /// Add vector.
-    [[nodiscard]] constexpr auto &operator+=(const Vector &other) noexcept {
+    constexpr auto &operator+=(const Vector &other) noexcept {
         linalg::add(this->View(), other.View(), this->View());
         return *this;
     }
 
     /// Add scalar.
-    [[nodiscard]] constexpr auto &operator+=(T scalar) noexcept {
+    constexpr auto &operator+=(T scalar) noexcept {
         for (std::size_t i = 0; i < N; ++i) {
             data[i] += scalar;
         }
@@ -105,23 +105,21 @@ export template <arithmetic T, std::size_t N> struct Vector {
     }
 
     /// Subtract vector.
-    [[nodiscard]] constexpr auto &operator-=(const Vector &other) noexcept {
+    constexpr auto &operator-=(const Vector &other) noexcept {
         return *this += (-other);
     }
 
     /// Subtract scalar.
-    [[nodiscard]] constexpr auto &operator-=(T scalar) noexcept {
-        return *this += (-scalar);
-    }
+    constexpr auto &operator-=(T scalar) noexcept { return *this += (-scalar); }
 
     /// Multiply by scalar.
-    [[nodiscard]] constexpr auto &operator*=(T scalar) noexcept {
+    constexpr auto &operator*=(T scalar) noexcept {
         linalg::scale(scalar, this->View());
         return *this;
     }
 
     /// Divide by scalar.
-    [[nodiscard]] constexpr auto &operator/=(T scalar) noexcept {
+    constexpr auto &operator/=(T scalar) noexcept {
         assert(scalar != 0);
         linalg::scale(1.0 / static_cast<Double>(scalar), this->View());
         return *this;
