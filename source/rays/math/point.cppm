@@ -1,6 +1,6 @@
 module;
 
-#include "math.hpp"
+#include "math.hpp" // IWYU pragma: keep
 
 #include <array>
 #include <type_traits>
