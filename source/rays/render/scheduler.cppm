@@ -43,10 +43,10 @@ export class SpiralScheduler : public Scheduler {
 
     /// Reset scheduler to initial state.
     void Reset() {
-        block_position_ = block_grid_size_ / 2;
+        block_position_ = Point2u{(block_grid_size_ - 1u) / 2u};
         block_counter_ = 0;
         direction_ = Direction::Right;
-        sprial_steps_ = 1;
+        spiral_steps_ = 1;
         spiral_size_ = 1;
     }
 
@@ -58,7 +58,7 @@ export class SpiralScheduler : public Scheduler {
             return std::nullopt;
         }
 
-        Bounds2u bounds{block_position_, block_size_};
+        Bounds2u bounds{block_position_ * block_size_, block_size_};
         bounds.Intersect(film_resolution_);
 
         assert(bounds.Size(0) > 0 && bounds.Size(1) > 0);
@@ -81,13 +81,13 @@ export class SpiralScheduler : public Scheduler {
             break;
         }
 
-        if (--sprial_steps_ == 0) {
+        if (--spiral_steps_ == 0) {
             direction_ = Direction{(std::to_underlying(direction_) + 1) % 4};
             if (direction_ == Direction::Right ||
                 direction_ == Direction::Left) {
                 ++spiral_size_;
             }
-            sprial_steps_ = spiral_size_;
+            spiral_steps_ = spiral_size_;
         }
 
         return tile;
@@ -112,7 +112,7 @@ export class SpiralScheduler : public Scheduler {
     /// Current direction of spiral.
     Direction direction_;
     /// Steps left before changing direction.
-    UInt sprial_steps_;
+    UInt spiral_steps_;
     /// Current spiral size in blocks.
     UInt spiral_size_;
 

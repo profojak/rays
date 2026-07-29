@@ -66,6 +66,13 @@ export template <arithmetic T, std::size_t N> struct Point {
         linalg::add(this->View(), other.View(), result.View());
         return result;
     }
+
+    /// Multiply point by scalar.
+    [[nodiscard]] constexpr auto operator*(T scalar) const noexcept {
+        Point result{*this};
+        linalg::scale(scalar, result.View());
+        return result;
+    }
 };
 
 export using Point2i = Point<Int, 2>;
