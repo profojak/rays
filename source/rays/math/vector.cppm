@@ -58,9 +58,9 @@ export template <arithmetic T, std::size_t N> struct Vector {
 
     /// Add scalar to vector.
     [[nodiscard]] constexpr auto operator+(T scalar) const noexcept {
-        Vector result{};
+        Vector result{*this};
         for (std::size_t i = 0; i < N; ++i) {
-            result.data[i] = data[i] + scalar;
+            result.data[i] += scalar;
         }
         return result;
     }
@@ -77,18 +77,15 @@ export template <arithmetic T, std::size_t N> struct Vector {
 
     /// Multiply vector by scalar.
     [[nodiscard]] constexpr auto operator*(T scalar) const noexcept {
-        Vector result{};
-        linalg::scale(this->View(), scalar, result.View());
+        Vector result{*this};
+        linalg::scale(scalar, result.View());
         return result;
     }
 
     /// Divide vector by scalar.
     [[nodiscard]] constexpr auto operator/(T scalar) const noexcept {
         assert(scalar != 0);
-
-        Vector result{};
-        linalg::scale(this->View(), static_cast<T>(1) / scalar, result.View());
-        return result;
+        return *this * (static_cast<T>(1) / scalar);
     }
 
     /// Add vector.
@@ -99,7 +96,9 @@ export template <arithmetic T, std::size_t N> struct Vector {
 
     /// Add scalar.
     [[nodiscard]] constexpr auto &operator+=(T scalar) noexcept {
-        linalg::add(this->View(), scalar, this->View());
+        for (std::size_t i = 0; i < N; ++i) {
+            data[i] += scalar;
+        }
         return *this;
     }
 
@@ -115,7 +114,7 @@ export template <arithmetic T, std::size_t N> struct Vector {
 
     /// Multiply by scalar.
     [[nodiscard]] constexpr auto &operator*=(T scalar) noexcept {
-        linalg::scale(this->View(), scalar, this->View());
+        linalg::scale(scalar, this->View());
         return *this;
     }
 
