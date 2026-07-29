@@ -85,7 +85,9 @@ export template <arithmetic T, std::size_t N> struct Vector {
     /// Divide vector by scalar.
     [[nodiscard]] constexpr auto operator/(T scalar) const noexcept {
         assert(scalar != 0);
-        return *this * (static_cast<T>(1) / scalar);
+        Vector result{*this};
+        linalg::scale(1.0 / static_cast<Double>(scalar), result.View());
+        return result;
     }
 
     /// Add vector.
@@ -120,7 +122,9 @@ export template <arithmetic T, std::size_t N> struct Vector {
 
     /// Divide by scalar.
     [[nodiscard]] constexpr auto &operator/=(T scalar) noexcept {
-        return *this *= (static_cast<T>(1) / scalar);
+        assert(scalar != 0);
+        linalg::scale(1.0 / static_cast<Double>(scalar), this->View());
+        return *this;
     }
 };
 
