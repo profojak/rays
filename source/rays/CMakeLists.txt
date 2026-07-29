@@ -18,6 +18,12 @@ target_sources(rays
             render/tile.cppm
 
             utility/type.cppm
+
+        FILE_SET headers
+        TYPE HEADERS
+        BASE_DIRS math
+        FILES
+            math/math.hpp
     PRIVATE
         rays.cpp
 )
