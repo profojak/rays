@@ -17,7 +17,7 @@ target_sources(rays
             render/scheduler.cppm
             render/tile.cppm
 
-            utility/concepts.cppm
+            utility/type.cppm
     PRIVATE
         rays.cpp
 )

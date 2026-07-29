@@ -4,8 +4,8 @@ module;
 
 export module rays:bounds;
 
-import :concepts;
 import :point;
+import :type;
 
 namespace rays {
 
@@ -20,6 +20,6 @@ struct Bounds {
     Point<T, N> max;
 };
 
-export using Bounds2i = Bounds<int, 2>;
+export using Bounds2i = Bounds<Int, 2>;
 
 } // namespace rays

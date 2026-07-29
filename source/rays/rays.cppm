@@ -1,10 +1,10 @@
 export module rays;
 
 import :bounds;
-import :concepts;
 import :film;
 import :pixel;
 import :point;
+import :type;
 import :vector;
 
 export namespace rays {

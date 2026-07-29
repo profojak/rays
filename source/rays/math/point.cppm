@@ -10,7 +10,7 @@ module;
 
 export module rays:point;
 
-import :concepts;
+import :type;
 
 namespace rays {
 
@@ -31,6 +31,6 @@ export template <arithmetic T, std::size_t N> struct Point {
     }
 };
 
-export using Point2i = Point<int, 2>;
+export using Point2i = Point<Int, 2>;
 
 } // namespace rays
