@@ -7,3 +7,6 @@
 [submodule "deps/ImGUI"]
 	path = deps/ImGUI
 	url = https://github.com/ocornut/imgui
+[submodule "deps/doctest"]
+	path = deps/doctest
+	url = https://github.com/doctest/doctest.git
