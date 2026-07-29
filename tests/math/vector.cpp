@@ -135,3 +135,20 @@ TEST_CASE("`Vector` scalar subtraction assignment") {
     CHECK(after[2] == doctest::Approx(3.0f));
     CHECK(&after == &v);
 }
+
+TEST_CASE("`Vector` unsigned scalar division") {
+    rays::Vector2u v{4, 6};
+    auto divided = v / 2;
+
+    CHECK(divided[0] == 2);
+    CHECK(divided[1] == 3);
+}
+
+TEST_CASE("`Vector` unsigned scalar division assignment") {
+    rays::Vector2u v{4, 6};
+    auto &after = v /= 2;
+
+    CHECK(after[0] == 2);
+    CHECK(after[1] == 3);
+    CHECK(&after == &v);
+}
