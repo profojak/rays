@@ -7,12 +7,12 @@ namespace rays {
 
 /// Film tile.
 export class Tile {
+  public:
+    Tile(const Bounds2u &bounds) : bounds_{bounds} {}
 
   private:
-    /// Tile position in film.
-    Point2i position_;
     /// Tile bounds in film.
-    Bounds2i bounds_;
+    Bounds2u bounds_;
 };
 
 } // namespace rays

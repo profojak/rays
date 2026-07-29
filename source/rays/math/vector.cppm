@@ -29,12 +29,20 @@ export template <arithmetic T, std::size_t N> struct Vector {
             std::forward<Self>(self).data.data());
     }
 
+    /// Access element by index.
+    template <typename Self>
+    [[nodiscard]] constexpr auto operator[](this Self &&self,
+                                            std::size_t i) noexcept
+        -> decltype(auto) {
+        return std::forward<Self>(self).data[i];
+    }
+
     /// Unary plus.
     [[nodiscard]] constexpr auto operator+() const noexcept { return *this; }
 
     /// Unary minus.
     [[nodiscard]] constexpr auto operator-() const noexcept {
-        Vector<T, N> result{};
+        Vector result{};
         for (std::size_t i = 0; i < N; ++i) {
             result.data[i] = -data[i];
         }
