@@ -1,6 +1,7 @@
 module;
 
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 export module rays:image;
@@ -26,9 +27,13 @@ template <> struct ImageFormatTraits<ImageFormat::R8G8B8A8> {
 
 /// Image.
 export template <ImageFormat F> class Image {
+
   public:
     /// Element type of image data.
     using element_type = typename ImageFormatTraits<F>::element_type;
+
+    /// Number of channels per pixel.
+    static constexpr std::size_t channels = ImageFormatTraits<F>::channels;
 
     Image(const Vector2u &resolution) : resolution_{resolution} {
         constexpr std::size_t channels = ImageFormatTraits<F>::channels;
@@ -37,7 +42,10 @@ export template <ImageFormat F> class Image {
     }
 
     /// Return pointer to image data.
-    const void *ImageData() const { return data_.data(); }
+    template <typename Self>
+    [[nodiscard]] auto *Data(this Self &&self) noexcept {
+        return std::forward<Self>(self).data_.data();
+    }
 
   private:
     /// Resolution of image.

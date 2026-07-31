@@ -10,7 +10,6 @@ target_sources(rays
             camera/camera.cppm
 
             image/film.cppm
-            image/framebuffer.cppm
             image/image.cppm
             image/pixel.cppm
 
