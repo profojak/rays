@@ -22,6 +22,7 @@ target_sources(rays
             render/tile.cppm
 
             state/state.cppm
+            state/thread.cppm
 
             utility/type.cppm
 
