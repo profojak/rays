@@ -7,7 +7,7 @@
 import rays;
 
 int main() {
-    rays::greet();
+    rays::Greet();
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("SDL_Init failed: %s", SDL_GetError());

@@ -1,3 +1,3 @@
 import rays;
 
-int main() { rays::greet(); }
+int main() { rays::Greet(); }

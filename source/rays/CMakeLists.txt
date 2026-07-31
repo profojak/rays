@@ -7,6 +7,8 @@ target_sources(rays
         FILES
             rays.cppm
 
+            camera/camera.cppm
+
             image/film.cppm
             image/framebuffer.cppm
             image/image.cppm
@@ -19,6 +21,8 @@ target_sources(rays
             render/scheduler.cppm
             render/tile.cppm
 
+            state/state.cppm
+
             utility/type.cppm
 
         FILE_SET headers
@@ -26,8 +30,6 @@ target_sources(rays
         BASE_DIRS math
         FILES
             math/math.hpp
-    PRIVATE
-        rays.cpp
 )
 
 target_include_directories(rays
