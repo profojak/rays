@@ -25,6 +25,9 @@ void Camera_Create(unsigned int width, unsigned int height) {
 /// Return pointer to image data.
 const void *Camera_ImageData() { return State::camera->ImageData(); }
 
+/// Render scene to film.
+void Camera_Render() { State::camera->Render(State::thread_pool); }
+
 } // namespace rays
 
 extern "C" { // C API
@@ -35,4 +38,6 @@ void Rays_Camera_Create(unsigned int width, unsigned int height) {
 }
 
 const void *Rays_Camera_ImageData() { return rays::Camera_ImageData(); }
+
+void Rays_Camera_Render() { rays::Camera_Render(); }
 }

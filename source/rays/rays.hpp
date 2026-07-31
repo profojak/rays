@@ -5,4 +5,6 @@ void Rays_Greet();
 void Rays_Camera_Create(unsigned int width, unsigned int height);
 /// Get pointer to image data.
 const void *Rays_Camera_ImageData();
+/// Render scene to film.
+void Rays_Camera_Render();
 }

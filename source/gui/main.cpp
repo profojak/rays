@@ -177,6 +177,10 @@ int main() {
         input.up = keys[SDL_SCANCODE_E];
         input.down = keys[SDL_SCANCODE_Q];
 
+        if (input.forward) {
+            Rays_Camera_Render();
+        }
+
         FetchImageData();
 
         RenderImGUI();
