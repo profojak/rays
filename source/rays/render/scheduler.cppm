@@ -1,6 +1,7 @@
 module;
 
 #include <cassert>
+#include <concepts>
 #include <mutex>
 #include <optional>
 #include <utility>
@@ -14,20 +15,21 @@ import :vector;
 namespace rays {
 
 /// Abstract base class for tile scheduler.
-export class Scheduler {
+export template <std::floating_point T> class Scheduler {
 
   public:
     virtual ~Scheduler() = default;
 
     /// Pure virtual method to get next tile.
-    virtual std::optional<Tile> NextTile() = 0;
+    virtual std::optional<Tile<T>> NextTile() = 0;
 
   protected:
     Scheduler() = default;
 };
 
 /// Scheduler that traverses film in spiral pattern.
-export class SpiralScheduler : public Scheduler {
+export template <std::floating_point T>
+class SpiralScheduler : public Scheduler<T> {
 
   public:
     /// Initialize with film resolution.
@@ -50,46 +52,51 @@ export class SpiralScheduler : public Scheduler {
     }
 
     /// Get next tile in spiral pattern.
-    std::optional<Tile> NextTile() override {
+    std::optional<Tile<T>> NextTile() override {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        if (block_counter_ == block_count_) {
-            return std::nullopt;
-        }
+        while (block_counter_ != block_count_) {
+            const Point2u pos = block_position_;
+            const bool in_grid =
+                pos[0] < block_grid_size_[0] && pos[1] < block_grid_size_[1];
 
-        Bounds2u bounds{block_position_ * block_size_, block_size_};
-        bounds.Intersect(film_resolution_);
-
-        assert(bounds.Size(0) > 0 && bounds.Size(1) > 0);
-
-        Tile tile{bounds};
-
-        ++block_counter_;
-        switch (direction_) {
-        case Direction::Right:
-            ++block_position_[0];
-            break;
-        case Direction::Down:
-            ++block_position_[1];
-            break;
-        case Direction::Left:
-            --block_position_[0];
-            break;
-        case Direction::Up:
-            --block_position_[1];
-            break;
-        }
-
-        if (--spiral_steps_ == 0) {
-            direction_ = Direction{(std::to_underlying(direction_) + 1) % 4};
-            if (direction_ == Direction::Right ||
-                direction_ == Direction::Left) {
-                ++spiral_size_;
+            switch (direction_) {
+            case Direction::Right:
+                ++block_position_[0];
+                break;
+            case Direction::Down:
+                ++block_position_[1];
+                break;
+            case Direction::Left:
+                --block_position_[0];
+                break;
+            case Direction::Up:
+                --block_position_[1];
+                break;
             }
-            spiral_steps_ = spiral_size_;
-        }
+            if (--spiral_steps_ == 0) {
+                direction_ =
+                    Direction{(std::to_underlying(direction_) + 1) % 4};
+                if (direction_ == Direction::Right ||
+                    direction_ == Direction::Left) {
+                    ++spiral_size_;
+                }
+                spiral_steps_ = spiral_size_;
+            }
 
-        return tile;
+            if (!in_grid) {
+                continue;
+            }
+
+            Bounds2u bounds{pos * block_size_, block_size_};
+            bounds.Intersect(film_resolution_);
+
+            assert(bounds.Size(0) > 0 && bounds.Size(1) > 0);
+
+            ++block_counter_;
+            return Tile<T>{bounds};
+        }
+        return std::nullopt;
     }
 
   private:

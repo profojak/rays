@@ -8,7 +8,7 @@ import :scheduler;
 import :type;
 
 TEST_CASE("`SpiralScheduler` returns expected number of tiles") {
-    rays::SpiralScheduler scheduler{rays::Vector2u{4, 4}, 2};
+    rays::SpiralScheduler<float> scheduler{rays::Vector2u{4, 4}, 2};
 
     std::size_t count = 0;
     while (scheduler.NextTile().has_value()) {
@@ -19,7 +19,7 @@ TEST_CASE("`SpiralScheduler` returns expected number of tiles") {
 }
 
 TEST_CASE("`SpiralScheduler` returns `nullopt` after exhaustion") {
-    rays::SpiralScheduler scheduler{rays::Vector2u{4, 4}, 2};
+    rays::SpiralScheduler<float> scheduler{rays::Vector2u{4, 4}, 2};
 
     for (std::size_t i = 0; i < 4; ++i) {
         CHECK(scheduler.NextTile().has_value());
@@ -31,10 +31,10 @@ TEST_CASE("`SpiralScheduler` returns `nullopt` after exhaustion") {
 TEST_CASE("`SpiralScheduler` tiles cover whole film") {
     const rays::Vector2u film_resolution{6, 6};
     const rays::UInt block_size = 2;
-    rays::SpiralScheduler scheduler{film_resolution, block_size};
+    rays::SpiralScheduler<float> scheduler{film_resolution, block_size};
 
     std::size_t total_area = 0;
-    std::optional<rays::Tile> tile;
+    std::optional<rays::Tile<float>> tile;
     while ((tile = scheduler.NextTile()).has_value()) {
         const auto &bounds = tile->Bounds();
         total_area += static_cast<std::size_t>(bounds.Size(0)) *
@@ -47,7 +47,7 @@ TEST_CASE("`SpiralScheduler` tiles cover whole film") {
 }
 
 TEST_CASE("`SpiralScheduler` starts near film center") {
-    rays::SpiralScheduler scheduler{rays::Vector2u{8, 8}, 2};
+    rays::SpiralScheduler<float> scheduler{rays::Vector2u{8, 8}, 2};
 
     const auto first_tile = scheduler.NextTile();
     REQUIRE(first_tile.has_value());
@@ -65,14 +65,14 @@ TEST_CASE("`SpiralScheduler` starts near film center") {
 TEST_CASE("`SpiralScheduler` clamps edges to film resolution") {
     const rays::Vector2u film_resolution{15, 13};
     const rays::UInt block_size = 4;
-    rays::SpiralScheduler scheduler{film_resolution, block_size};
+    rays::SpiralScheduler<float> scheduler{film_resolution, block_size};
 
     std::size_t total_area = 0;
     bool found_right_edge = false;
     bool found_bottom_edge = false;
     bool found_corner_tile = false;
 
-    std::optional<rays::Tile> tile;
+    std::optional<rays::Tile<float>> tile;
     while ((tile = scheduler.NextTile()).has_value()) {
         const auto &bounds = tile->Bounds();
 
@@ -109,7 +109,7 @@ TEST_CASE("`SpiralScheduler` clamps edges to film resolution") {
 }
 
 TEST_CASE("`SpiralScheduler` can be reset and run again") {
-    rays::SpiralScheduler scheduler{rays::Vector2u{4, 4}, 2};
+    rays::SpiralScheduler<float> scheduler{rays::Vector2u{4, 4}, 2};
 
     for (std::size_t i = 0; i < 4; ++i) {
         CHECK(scheduler.NextTile().has_value());
@@ -125,7 +125,7 @@ TEST_CASE("`SpiralScheduler` can be reset and run again") {
 }
 
 TEST_CASE("`SpiralScheduler` handles single-tile film") {
-    rays::SpiralScheduler scheduler{rays::Vector2u{2, 2}, 2};
+    rays::SpiralScheduler<float> scheduler{rays::Vector2u{2, 2}, 2};
 
     const auto tile = scheduler.NextTile();
     REQUIRE(tile.has_value());
@@ -135,7 +135,7 @@ TEST_CASE("`SpiralScheduler` handles single-tile film") {
 }
 
 TEST_CASE("`SpiralScheduler` handles film smaller than block size") {
-    rays::SpiralScheduler scheduler{rays::Vector2u{1, 1}, 4};
+    rays::SpiralScheduler<float> scheduler{rays::Vector2u{1, 1}, 4};
 
     const auto tile = scheduler.NextTile();
     REQUIRE(tile.has_value());
