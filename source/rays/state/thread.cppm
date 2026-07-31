@@ -47,6 +47,11 @@ export class ThreadPool {
     /// Return number of worker threads.
     [[nodiscard]] std::size_t Size() const noexcept { return workers_.size(); }
 
+    /// Check if no submitted task is currently running.
+    [[nodiscard]] bool IsIdle() const noexcept {
+        return outstanding_.load(std::memory_order_acquire) == 0;
+    }
+
     /// Block until all submitted tasks have completed.
     void WaitIdle() {
         std::size_t current = outstanding_.load(std::memory_order_acquire);
