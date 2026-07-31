@@ -46,6 +46,9 @@ struct Bounds {
         return max[dimension] - min[dimension];
     }
 
+    /// Return area of bounds.
+    constexpr T Area() const noexcept { return Size(0) * Size(1); }
+
     /// Intersect with another bounds.
     void Intersect(const Bounds &other) {
         min = Point<T, N>{std::max(min[0], other.min[0]),

@@ -13,6 +13,9 @@ target_sources(rays
             image/image.cppm
             image/pixel.cppm
 
+            integrator/integrator.cppm
+            integrator/montecarlo.cppm
+
             math/bounds.cppm
             math/point.cppm
             math/vector.cppm
