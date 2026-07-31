@@ -7,6 +7,7 @@ add_executable(tests
     math/point.cpp
 
     render/scheduler.cpp
+    render/tile.cpp
 )
 
 target_link_libraries(tests
