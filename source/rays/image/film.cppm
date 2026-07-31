@@ -20,6 +20,9 @@ template <std::floating_point T> class Film {
         : resolution_{resolution}, film_{resolution[0] * resolution[1]},
           frame_buffer_{resolution} {}
 
+    /// Return pointer to image data.
+    const void *ImageData() const { return frame_buffer_.ImageData(); }
+
   private:
     /// Film resolution.
     Vector2u resolution_{};

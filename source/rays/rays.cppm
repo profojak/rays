@@ -22,6 +22,9 @@ void Camera_Create(unsigned int width, unsigned int height) {
     State::camera = std::make_unique<Camera<float>>(Vector2u{width, height});
 }
 
+/// Return pointer to image data.
+const void *Camera_ImageData() { return State::camera->ImageData(); }
+
 } // namespace rays
 
 extern "C" { // C API
@@ -30,4 +33,6 @@ void Rays_Greet() { rays::Greet(); }
 void Rays_Camera_Create(unsigned int width, unsigned int height) {
     rays::Camera_Create(width, height);
 }
+
+const void *Rays_Camera_ImageData() { return rays::Camera_ImageData(); }
 }

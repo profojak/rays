@@ -36,6 +36,9 @@ export template <ImageFormat F> class Image {
         std::fill(data_.begin(), data_.end(), 0);
     }
 
+    /// Return pointer to image data.
+    const void *ImageData() const { return data_.data(); }
+
   private:
     /// Resolution of image.
     Vector2u resolution_;
