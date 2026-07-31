@@ -36,7 +36,6 @@ export template <ImageFormat F> class Image {
     static constexpr std::size_t channels = ImageFormatTraits<F>::channels;
 
     Image(const Vector2u &resolution) : resolution_{resolution} {
-        constexpr std::size_t channels = ImageFormatTraits<F>::channels;
         data_.resize(resolution[0] * resolution[1] * channels);
         std::fill(data_.begin(), data_.end(), 0);
     }
