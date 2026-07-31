@@ -4,10 +4,10 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
 
-import rays;
+#include "rays.hpp"
 
 int main() {
-    rays::Greet();
+    Rays_Greet();
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("SDL_Init failed: %s", SDL_GetError());

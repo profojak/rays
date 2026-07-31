@@ -3,6 +3,8 @@ module;
 #include <memory>
 #include <print>
 
+#include "rays.hpp"
+
 export module rays;
 
 import :camera;
