@@ -5,26 +5,28 @@ module;
 
 export module rays:film;
 
+import :framebuffer;
+import :image;
 import :vector;
+import :pixel;
 
 export namespace rays {
 
-/// 2D raster of accumulated color samples.
+/// 2D raster of accumulated `Pixel` samples.
 template <std::floating_point T> class Film {
 
   public:
-    Film() noexcept = default;
-    /// Initialize with given width and height.
-    Film(std::size_t width, std::size_t height)
-        : width_{width}, height_{height}, image_(width * height) {}
+    Film(const Vector2u &resolution)
+        : resolution_{resolution}, film_{resolution[0] * resolution[1]},
+          frame_buffer_{resolution} {}
 
   private:
-    /// Film width in pixels.
-    std::size_t width_{0};
-    /// Film height in pixels.
-    std::size_t height_{0};
-    /// Accumulated color samples.
-    std::vector<Vector3f> image_{};
+    /// Film resolution.
+    Vector2u resolution_{};
+    /// Accumulated `Pixel` samples.
+    std::vector<Pixel<T>> film_{};
+    /// Framebuffer for rendering to screen and writing to image.
+    FrameBuffer<ImageFormat::R8G8B8A8> frame_buffer_;
 };
 
 } // namespace rays

@@ -8,6 +8,8 @@ target_sources(rays
             rays.cppm
 
             image/film.cppm
+            image/framebuffer.cppm
+            image/image.cppm
             image/pixel.cppm
 
             math/bounds.cppm

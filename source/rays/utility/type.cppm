@@ -20,6 +20,7 @@ static_assert(sizeof(Float) == 4, "Float must be 4 bytes");
 static_assert(sizeof(Double) == 8, "Double must be 8 bytes");
 #endif
 
+export using UChar = std::uint8_t;
 export using Int = std::int32_t;
 export using UInt = std::uint32_t;
 
