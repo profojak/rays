@@ -23,6 +23,9 @@ target_sources(rays
             render/scheduler.cppm
             render/tile.cppm
 
+            scene/loader.cppm
+            scene/scene.cppm
+
             state/state.cppm
             state/thread.cppm
 
@@ -41,6 +44,7 @@ target_include_directories(rays
         ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE
         ${CMAKE_BINARY_DIR}/deps/stdBLAS/include/experimental
+        ${CMAKE_SOURCE_DIR}/deps/RapidJSON/include
 )
 
 target_link_libraries(rays

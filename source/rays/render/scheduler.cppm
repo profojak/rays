@@ -40,6 +40,14 @@ class SpiralScheduler : public Scheduler<T> {
         Reset();
     }
 
+    SpiralScheduler(const SpiralScheduler &other)
+        : film_resolution_{other.film_resolution_},
+          block_grid_size_{other.block_grid_size_},
+          block_size_{other.block_size_}, block_count_{other.block_count_},
+          block_counter_{other.block_counter_}, direction_{other.direction_},
+          spiral_steps_{other.spiral_steps_}, spiral_size_{other.spiral_size_} {
+    }
+
     ~SpiralScheduler() override = default;
 
     /// Reset scheduler to initial state.

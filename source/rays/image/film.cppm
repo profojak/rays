@@ -22,6 +22,10 @@ template <std::floating_point T> class Film {
         : resolution_{resolution}, film_{resolution[0] * resolution[1]},
           image_{resolution} {}
 
+    Film(const Film &other)
+        : background_{other.background_}, resolution_{other.resolution_},
+          film_{other.film_}, image_{other.image_} {}
+
     /// Return reference to pixel.
     template <typename Self>
     [[nodiscard]] auto &PixelAt(this Self &&self, UInt x, UInt y) {
@@ -69,6 +73,8 @@ template <std::floating_point T> class Film {
     }
 
   private:
+    /// Background color.
+    Pixel<T> background_{0, 0, 0};
     /// Film resolution.
     Vector2u resolution_{};
     /// Accumulated `Pixel` samples.

@@ -15,6 +15,8 @@ namespace rays {
 /// Camera that renders scene to film.
 export template <std::floating_point T> class Camera {
   public:
+    Camera() = default;
+
     Camera(const Vector2u &film_size)
         : film_{film_size}, scheduler_{film_size, 64} {}
 
@@ -32,11 +34,11 @@ export template <std::floating_point T> class Camera {
 
   private:
     /// Camera film.
-    Film<T> film_;
+    Film<T> film_{Vector2u{1280, 720}};
     /// Monte Carlo integrator.
-    MonteCarloIntegrator<T> monte_carlo_;
+    MonteCarloIntegrator<T> monte_carlo_{};
     /// Scheduler for tile sampling.
-    SpiralScheduler<T> scheduler_;
+    SpiralScheduler<T> scheduler_{Vector2u{1280, 720}, 64};
 };
 
 } // namespace rays
