@@ -69,7 +69,7 @@ export class CRTLoader : public Loader {
                 [[maybe_unused]] const Vector3f background_color{
                     color[0].GetFloat(), color[1].GetFloat(),
                     color[2].GetFloat()};
-                // TODO
+                scene->GetCamera().GetFilm().SetBackground(background_color);
             }
 
             // Image settings.
@@ -78,7 +78,8 @@ export class CRTLoader : public Loader {
                 const auto &width = image["width"];
                 const auto &height = image["height"];
                 if (width.IsUint() && height.IsUint()) {
-                    // TODO
+                    scene->GetCamera().SetFilmSize(
+                        Vector2u{width.GetUint(), height.GetUint()});
                 }
             }
         }

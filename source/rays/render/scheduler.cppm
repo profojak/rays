@@ -23,6 +23,9 @@ export template <std::floating_point T> class Scheduler {
     /// Pure virtual method to get next tile.
     virtual std::optional<Tile<T>> NextTile() = 0;
 
+    /// Set film size.
+    virtual void SetFilmSize(const Vector2u &film_size) = 0;
+
   protected:
     Scheduler() = default;
 };
@@ -49,6 +52,13 @@ class SpiralScheduler : public Scheduler<T> {
     }
 
     ~SpiralScheduler() override = default;
+
+    /// Set film size.
+    void SetFilmSize(const Vector2u &film_size) override {
+        film_resolution_ = film_size;
+        block_grid_size_ = (film_resolution_ + block_size_ - 1) / block_size_;
+        block_count_ = block_grid_size_[0] * block_grid_size_[1];
+    }
 
     /// Reset scheduler to initial state.
     void Reset() {

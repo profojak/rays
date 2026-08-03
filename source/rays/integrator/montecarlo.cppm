@@ -24,7 +24,7 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
         for (UInt y = bounds.min[1]; y < bounds.max[1]; ++y) {
             for (UInt x = bounds.min[0]; x < bounds.max[0]; ++x) {
                 auto &pixel = tile.PixelAt(x, y);
-                pixel = Pixel<T>{255.0f, 0.0f, 0.0f};
+                pixel = film.GetBackground();
             }
         }
         film.PutTile(tile);

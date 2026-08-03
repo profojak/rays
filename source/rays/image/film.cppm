@@ -37,6 +37,21 @@ template <std::floating_point T> class Film {
         return resolution_;
     }
 
+    /// Set film resolution.
+    void SetResolution(const Vector2u &resolution) {
+        resolution_ = resolution;
+        film_.resize(resolution[0] * resolution[1]);
+        image_.SetResolution(resolution);
+    }
+
+    /// Get film background color.
+    [[nodiscard]] Pixel<T> GetBackground() const noexcept {
+        return background_;
+    }
+
+    /// Set film background color.
+    void SetBackground(const Pixel<T> &color) { background_ = color; }
+
     /// Put tile into film.
     void PutTile(const Tile<T> &tile) {
         std::lock_guard<std::mutex> lock{mutex_};

@@ -46,6 +46,13 @@ export template <ImageFormat F> class Image {
         return std::forward<Self>(self).data_.data();
     }
 
+    /// Set image resolution.
+    void SetResolution(const Vector2u &resolution) {
+        resolution_ = resolution;
+        data_.resize(resolution[0] * resolution[1] * channels);
+        std::fill(data_.begin(), data_.end(), 0);
+    }
+
   private:
     /// Resolution of image.
     Vector2u resolution_;

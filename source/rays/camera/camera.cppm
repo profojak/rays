@@ -25,6 +25,12 @@ export template <std::floating_point T> class Camera {
         return std::forward<Self>(self).film_;
     }
 
+    /// Set film size.
+    void SetFilmSize(const Vector2u &film_size) {
+        film_.SetResolution(film_size);
+        scheduler_.SetFilmSize(film_size);
+    }
+
     /// Kick off render only if no render is currently in progress.
     void Render(ThreadPool &thread_pool) {
         if (!thread_pool.IsIdle()) {

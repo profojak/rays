@@ -6,6 +6,8 @@ module;
 
 export module rays:pixel;
 
+import :vector;
+
 export namespace rays {
 
 /// Pixel.
@@ -16,6 +18,8 @@ template <std::floating_point T> struct Pixel {
 
     constexpr Pixel() noexcept = default;
     constexpr Pixel(T r, T g, T b) noexcept : rgb{r, g, b} {}
+    constexpr Pixel(Vector3f color) noexcept
+        : rgb{color[0], color[1], color[2]} {}
 
     /// Access red component.
     template <typename Self>
