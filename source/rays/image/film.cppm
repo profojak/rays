@@ -32,6 +32,11 @@ template <std::floating_point T> class Film {
         return self.film_[y * self.resolution_[0] + x];
     }
 
+    /// Return resolution of film.
+    [[nodiscard]] Vector2u GetResolution() const noexcept {
+        return resolution_;
+    }
+
     /// Put tile into film.
     void PutTile(const Tile<T> &tile) {
         std::lock_guard<std::mutex> lock{mutex_};

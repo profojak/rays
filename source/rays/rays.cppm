@@ -2,12 +2,14 @@ module;
 
 #include <memory>
 #include <print>
+#include <string>
 
 #include "rays.hpp"
 
 export module rays;
 
 import :camera;
+import :loader;
 import :state;
 import :type;
 import :vector;
@@ -17,24 +19,41 @@ export namespace rays {
 /// Greet folks from Chaos!
 void Greet() { std::println("Hello, Chaos!"); }
 
-/// Create camera with given film size.
-void Camera_Create(unsigned int width, unsigned int height) {
-    State::camera = std::make_unique<Camera<float>>(Vector2u{width, height});
+/// Load scene from file.
+void Scene_Load(const std::string &path, Loader::Type type) {
+    switch (type) {
+    case Loader::Type::CRT:
+        State::scene = CRTLoader::Load(path);
+        break;
+    }
+}
+
+/// Get camera resolution.
+Vector2u Camera_GetResolution() {
+    return State::scene->GetCamera().GetFilm().GetResolution();
 }
 
 /// Return pointer to image data.
-const void *Camera_ImageData() { return State::camera->ImageData(); }
+const void *Camera_ImageData() {
+    return State::scene->GetCamera().GetFilm().ImageData();
+}
 
 /// Render scene to film.
-void Camera_Render() { State::camera->Render(State::thread_pool); }
+void Camera_Render() { State::scene->GetCamera().Render(State::thread_pool); }
 
 } // namespace rays
 
 extern "C" { // C API
 void Rays_Greet() { rays::Greet(); }
 
-void Rays_Camera_Create(unsigned int width, unsigned int height) {
-    rays::Camera_Create(width, height);
+void Rays_Scene_Load(const char *path, Rays_Scene_Type type) {
+    rays::Scene_Load(path, static_cast<rays::Loader::Type>(type));
+}
+
+void Rays_Camera_GetResolution(unsigned int *width, unsigned int *height) {
+    auto res = rays::Camera_GetResolution();
+    *width = res[0];
+    *height = res[1];
 }
 
 const void *Rays_Camera_ImageData() { return rays::Camera_ImageData(); }

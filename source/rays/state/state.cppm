@@ -4,15 +4,15 @@ module;
 
 export module rays:state;
 
-import :camera;
+import :scene;
 import :thread;
 
 namespace rays {
 
 /// Internal state of renderer.
 export struct State {
-    /// Camera used to render scene.
-    inline static std::unique_ptr<Camera<float>> camera;
+    /// Scene.
+    inline static std::unique_ptr<Scene> scene;
     /// Pool of worker threads used by integrators for tiled rendering.
     inline static ThreadPool thread_pool;
 };

@@ -18,9 +18,9 @@ struct SDL_State {
     /// Texture handle.
     SDL_Texture *texture = nullptr;
     /// Window width.
-    constexpr static int width = 1280;
+    inline static unsigned int width = 1280;
     /// Window height.
-    constexpr static int height = 720;
+    inline static unsigned int height = 720;
 } state;
 
 /// Per-frame input state.
@@ -122,7 +122,7 @@ void RenderImGUI() {
 /// Present one frame.
 void RenderFrame() {
     SDL_RenderClear(state.renderer);
-    SDL_FRect const viewport = {0, 0, state.width, state.height};
+    SDL_FRect const viewport = {0, 0, (float)state.width, (float)state.height};
     SDL_RenderTexture(state.renderer, state.texture, nullptr, &viewport);
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), state.renderer);
     SDL_RenderPresent(state.renderer);
@@ -143,8 +143,16 @@ void FetchImageData() {
     }
 }
 
-int main() {
+int main(int argc, char **argv) {
     Rays_Greet();
+
+    if (argc < 2) {
+        printf("Usage: %s <scene>\n", argv[0]);
+        return 1;
+    }
+
+    Rays_Scene_Load(argv[1], Rays_Scene_Type_CRT);
+    Rays_Camera_GetResolution(&state.width, &state.height);
 
     if (InitializeSDL()) {
         return 1;
@@ -153,8 +161,6 @@ int main() {
     if (InitializeImGUI()) {
         return 1;
     }
-
-    Rays_Camera_Create(state.width, state.height);
 
     bool const *keys = SDL_GetKeyboardState(nullptr);
 

@@ -8,6 +8,7 @@ module;
 #include <iterator>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 export module rays:loader;
@@ -19,14 +20,19 @@ import :vector;
 
 namespace rays {
 
-/// Abstract base class for scene loaders.
+/// Base class for scene loaders.
 export class Loader {
 
   public:
-    virtual ~Loader() = default;
+    /// Type of scene to load.
+    enum class Type : std::uint8_t {
+        CRT = 0,
+    };
 
     /// Load scene from given file path.
-    virtual Scene Load(const std::string &path) = 0;
+    static std::unique_ptr<Scene> Load(const std::string &path) {
+        std::unreachable();
+    }
 };
 
 /// Loader for CRT scenes.
@@ -34,8 +40,8 @@ export class CRTLoader : public Loader {
 
   public:
     /// Load scene from given .crtscene file.
-    [[nodiscard]] Scene Load(const std::string &path) override {
-        Scene scene{};
+    [[nodiscard]] static std::unique_ptr<Scene> Load(const std::string &path) {
+        std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 
         // Open scene file and parse as JSON.
         std::ifstream file{path};

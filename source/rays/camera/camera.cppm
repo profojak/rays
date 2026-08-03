@@ -20,8 +20,10 @@ export template <std::floating_point T> class Camera {
     Camera(const Vector2u &film_size)
         : film_{film_size}, scheduler_{film_size, 64} {}
 
-    /// Return pointer to image data.
-    const void *ImageData() const { return film_.ImageData(); }
+    /// Return reference to `Film`.
+    template <typename Self> [[nodiscard]] auto &GetFilm(this Self &&self) {
+        return std::forward<Self>(self).film_;
+    }
 
     /// Kick off render only if no render is currently in progress.
     void Render(ThreadPool &thread_pool) {
