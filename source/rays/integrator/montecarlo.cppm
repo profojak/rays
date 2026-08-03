@@ -28,12 +28,6 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
             }
         }
         film.PutTile(tile);
-
-        // Simulate variable render cost so scheduler is observable.
-        thread_local std::mt19937 rng{std::random_device{}()};
-        std::uniform_int_distribution<std::chrono::milliseconds::rep> delay{
-            1000, 2000};
-        std::this_thread::sleep_for(std::chrono::milliseconds{delay(rng)});
     }
 };
 
