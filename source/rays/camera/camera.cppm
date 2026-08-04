@@ -1,11 +1,13 @@
 module;
 
 #include <concepts>
+#include <vector>
 
 export module rays:camera;
 
 import :film;
 import :matrix;
+import :mesh;
 import :montecarlo;
 import :scheduler;
 import :thread;
@@ -39,12 +41,13 @@ export template <std::floating_point T> class Camera {
     void SetRotation(const Matrix3f &rotation) { rotation_ = rotation; }
 
     /// Kick off render only if no render is currently in progress.
-    void Render(ThreadPool &thread_pool) {
+    void Render(ThreadPool &thread_pool, const std::vector<Mesh> &meshes) {
         if (!thread_pool.IsIdle()) {
             return;
         }
         scheduler_.Reset();
-        monte_carlo_.Render(film_, scheduler_, thread_pool);
+        monte_carlo_.Render(position_, rotation_, meshes, film_, scheduler_,
+                            thread_pool);
     }
 
   private:

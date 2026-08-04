@@ -7,6 +7,7 @@ export module rays:scene;
 
 import :camera;
 import :mesh;
+import :thread;
 import :type;
 
 namespace rays {
@@ -22,6 +23,11 @@ export class Scene {
 
     /// Add `Mesh` to scene.
     void AddMesh(const Mesh &&mesh) { meshes_.push_back(std::move(mesh)); }
+
+    /// Render scene to film.
+    void Render(ThreadPool &thread_pool) {
+        camera_.Render(thread_pool, meshes_);
+    }
 
   private:
     /// Camera.

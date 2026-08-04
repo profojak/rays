@@ -39,7 +39,7 @@ const void *Camera_ImageData() {
 }
 
 /// Render scene to film.
-void Camera_Render() { State::scene->GetCamera().Render(State::thread_pool); }
+void Camera_Render() { State::scene->Render(State::thread_pool); }
 
 } // namespace rays
 
