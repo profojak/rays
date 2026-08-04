@@ -35,7 +35,7 @@ export template <std::floating_point T> class Integrator {
 export template <std::floating_point T>
 class SamplingIntegrator : public Integrator<T> {
   public:
-    SamplingIntegrator() = default;
+    SamplingIntegrator(const Vector2u &film_size) { SetFilmSize(film_size); }
 
     /// Render scene using ray sampling.
     void Render(const Vector3f &camera_position,
@@ -55,6 +55,16 @@ class SamplingIntegrator : public Integrator<T> {
         }
     }
 
+    /// Set film size.
+    void SetFilmSize(const Vector2u &film_size) {
+        film_size_ = film_size;
+        aspect_ = static_cast<Float>(film_size_[0]) /
+                  static_cast<Float>(film_size_[1]);
+        inverse_uv_ =
+            Vector2f{1.0f / static_cast<Float>(film_size_[0]) * Float{2},
+                     1.0f / static_cast<Float>(film_size_[1]) * Float{2}};
+    }
+
   protected:
     /// Render single `Tile` of `Film`.
     virtual void RenderTile(Tile<T> &tile, Film<T> &film) = 0;
@@ -63,6 +73,14 @@ class SamplingIntegrator : public Integrator<T> {
     Vector3f position_{};
     /// Camera rotation during render.
     Matrix3f rotation_{};
+
+    /// Film size.
+    Vector2u film_size_{};
+    /// Inverse UV coordinates.
+    Vector2f inverse_uv_{};
+    /// Aspect ratio.
+    Float aspect_{};
+
     /// Scene meshes during render.
     const std::vector<Mesh> *meshes_{};
 };

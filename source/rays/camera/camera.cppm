@@ -21,7 +21,8 @@ export template <std::floating_point T> class Camera {
     Camera() = default;
 
     Camera(const Vector2u &film_size)
-        : film_{film_size}, scheduler_{film_size, 64} {}
+        : film_{film_size}, monte_carlo_{film_size}, scheduler_{film_size, 64} {
+    }
 
     /// Return reference to `Film`.
     template <typename Self> [[nodiscard]] auto &GetFilm(this Self &&self) {
@@ -31,6 +32,7 @@ export template <std::floating_point T> class Camera {
     /// Set film size.
     void SetFilmSize(const Vector2u &film_size) {
         film_.SetResolution(film_size);
+        monte_carlo_.SetFilmSize(film_size);
         scheduler_.SetFilmSize(film_size);
     }
 
@@ -59,7 +61,7 @@ export template <std::floating_point T> class Camera {
     /// Camera film.
     Film<T> film_{Vector2u{1280, 720}};
     /// Monte Carlo integrator.
-    MonteCarloIntegrator<T> monte_carlo_{};
+    MonteCarloIntegrator<T> monte_carlo_{Vector2u{1280, 720}};
     /// Scheduler for tile sampling.
     SpiralScheduler<T> scheduler_{Vector2u{1280, 720}, 64};
 };

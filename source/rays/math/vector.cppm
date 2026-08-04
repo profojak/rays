@@ -29,6 +29,12 @@ export template <arithmetic T, std::size_t N> struct Vector {
             std::forward<Self>(self).data.data());
     }
 
+    /// Normalize vector.
+    void Normalize() noexcept {
+        const T norm = linalg::vector_two_norm(View());
+        *this /= norm;
+    }
+
     /// Access element by index.
     template <typename Self>
     [[nodiscard]] constexpr auto operator[](this Self &&self,
@@ -126,6 +132,7 @@ export template <arithmetic T, std::size_t N> struct Vector {
     }
 };
 
+export using Vector2f = Vector<Float, 2>;
 export using Vector3f = Vector<Float, 3>;
 export using Vector2u = Vector<UInt, 2>;
 

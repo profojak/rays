@@ -1,6 +1,5 @@
 module;
 
-#include <cmath>
 #include <concepts>
 
 export module rays:montecarlo;
@@ -21,8 +20,10 @@ namespace rays {
 /// Monte Carlo integrator that samples radiance along rays.
 export template <std::floating_point T>
 class MonteCarloIntegrator : public SamplingIntegrator<T> {
+
   public:
-    MonteCarloIntegrator() = default;
+    MonteCarloIntegrator(const Vector2u &film_size_)
+        : SamplingIntegrator<T>{film_size_} {}
 
   protected:
     /// Render single `Tile` of `Film`.
@@ -44,22 +45,14 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
     /// Generate primary ray for pixel at film coordinates.
     [[nodiscard]] Ray3f GenerateRay(const UInt x, const UInt y,
                                     const Vector2u &resolution) const noexcept {
-        const auto aspect = static_cast<Float>(resolution[0]) /
-                            static_cast<Float>(resolution[1]);
-        const auto u = (static_cast<Float>(x) + Float{0.5}) /
-                           static_cast<Float>(resolution[0]) * Float{2} -
-                       Float{1};
-        const auto v = (static_cast<Float>(y) + Float{0.5}) /
-                           static_cast<Float>(resolution[1]) * Float{2} -
-                       Float{1};
+        const auto u =
+            (static_cast<Float>(x) + 0.5f) * this->inverse_uv_[0] - 1.0f;
+        const auto v =
+            (static_cast<Float>(y) + 0.5f) * this->inverse_uv_[1] - 1.0f;
 
-        Vector3f direction{u * aspect, -v, Float{-1}};
+        Vector3f direction{u * this->aspect_, -v, -1.0f};
         direction = this->rotation_ * direction;
-
-        const auto length = std::sqrt(direction[0] * direction[0] +
-                                      direction[1] * direction[1] +
-                                      direction[2] * direction[2]);
-        direction /= length;
+        direction.Normalize();
 
         return Ray3f{this->position_, direction};
     }
