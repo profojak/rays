@@ -18,8 +18,8 @@ export struct Triangle {
 
     /// Test ray against triangle with given vertex positions.
     [[nodiscard]] bool Intersect(const Ray3f &ray, const Vector3f &v0,
-                                 const Vector3f &v1,
-                                 const Vector3f &v2) const noexcept {
+                                 const Vector3f &v1, const Vector3f &v2,
+                                 Float &t) const noexcept {
         const Vector3f edge1 = v1 - v0;
         const Vector3f edge2 = v2 - v0;
 
@@ -45,16 +45,21 @@ export struct Triangle {
 
         // Barycentric coordinate v.
         const Vector3f qvec{tvec[1] * edge1[2] - tvec[2] * edge1[1],
-            tvec[2] * edge1[0] - tvec[0] * edge1[2],
-            tvec[0] * edge1[1] - tvec[1] * edge1[0]};
-        const Float v = linalg::dot(ray.direction.View(), qvec.View()) * inv_det;
+                            tvec[2] * edge1[0] - tvec[0] * edge1[2],
+                            tvec[0] * edge1[1] - tvec[1] * edge1[0]};
+        const Float v =
+            linalg::dot(ray.direction.View(), qvec.View()) * inv_det;
         if (v < Float{0} || u + v > Float{1}) {
             return false;
         }
 
         // Distance from ray origin to intersection.
-        const Float t = linalg::dot(edge2.View(), qvec.View()) * inv_det;
-        return t > Float{0};
+        const Float tt = linalg::dot(edge2.View(), qvec.View()) * inv_det;
+        if (tt <= Float{0} || tt >= t) {
+            return false;
+        }
+        t = tt;
+        return true;
     }
 };
 
