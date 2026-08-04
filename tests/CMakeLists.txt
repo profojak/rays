@@ -7,6 +7,9 @@ add_executable(tests
     math/vector.cpp
     math/point.cpp
 
+    object/triangle.cpp
+
+    render/ray.cpp
     render/scheduler.cpp
     render/tile.cpp
 )
