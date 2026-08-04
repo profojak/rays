@@ -17,6 +17,7 @@ target_sources(rays
             integrator/montecarlo.cppm
 
             math/bounds.cppm
+            math/matrix.cppm
             math/point.cppm
             math/vector.cppm
 
