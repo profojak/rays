@@ -1,8 +1,10 @@
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_log.h>
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_render.h>
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_video.h>
 
-#include "SDL3/SDL_log.h"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
@@ -21,6 +23,10 @@ struct SDL_State {
     inline static unsigned int width = 1280;
     /// Window height.
     inline static unsigned int height = 720;
+    /// Pixels per window width.
+    inline static float scale_x = 1.0f;
+    /// Pixels per window height.
+    inline static float scale_y = 1.0f;
 } state;
 
 /// Per-frame input state.
@@ -64,7 +70,8 @@ int InitializeSDL() {
         return 1;
     }
 
-    state.window = SDL_CreateWindow("Rays", state.width, state.height, 0);
+    state.window = SDL_CreateWindow("Rays", state.width, state.height,
+                                    SDL_WINDOW_HIGH_PIXEL_DENSITY);
     if (!state.window) {
         SDL_Log("SDL_CreateWindow failed: %s", SDL_GetError());
         ShutdownSDL();
@@ -77,6 +84,19 @@ int InitializeSDL() {
         ShutdownSDL();
         return 1;
     }
+
+    int window_h, window_w, pixel_w, pixel_h;
+    SDL_GetWindowSize(state.window, &window_w, &window_h);
+    SDL_GetWindowSizeInPixels(state.window, &pixel_w, &pixel_h);
+    if (window_w > 0 && window_h > 0) {
+        state.scale_x = (float)pixel_w / window_w;
+        state.scale_y = (float)pixel_h / window_h;
+        SDL_SetRenderScale(state.renderer, state.scale_x, state.scale_y);
+    }
+
+    SDL_SetWindowSize(state.window,
+                      (int)SDL_ceilf((float)state.width / state.scale_x),
+                      (int)SDL_ceilf((float)state.height / state.scale_y));
 
     state.texture = SDL_CreateTexture(state.renderer, SDL_PIXELFORMAT_RGBA32,
                                       SDL_TEXTUREACCESS_STREAMING, state.width,
@@ -122,7 +142,8 @@ void RenderImGUI() {
 /// Present one frame.
 void RenderFrame() {
     SDL_RenderClear(state.renderer);
-    SDL_FRect const viewport = {0, 0, (float)state.width, (float)state.height};
+    SDL_FRect const viewport = {0, 0, (float)state.width / state.scale_x,
+                                (float)state.height / state.scale_y};
     SDL_RenderTexture(state.renderer, state.texture, nullptr, &viewport);
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), state.renderer);
     SDL_RenderPresent(state.renderer);
