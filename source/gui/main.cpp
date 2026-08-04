@@ -31,12 +31,12 @@ struct SDL_State {
 
 /// Per-frame input state.
 struct Input {
-    bool forward = false;
-    bool back = false;
-    bool left = false;
-    bool right = false;
-    bool up = false;
-    bool down = false;
+    /// Whether to render.
+    bool to_render = false;
+    /// Whether camera is currently rendering.
+    bool is_rendering = false;
+    /// Camera move input.
+    Rays_Camera_MoveInput move_input;
 } input;
 
 /// Frame duration for 60 FPS.
@@ -128,12 +128,20 @@ void RenderImGUI() {
 
     ImGui::SetNextWindowPos({16, 16}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({240, 80}, ImGuiCond_FirstUseEver);
-    ImGui::Begin("Chaos");
-    ImGui::TextUnformatted("Hello, Chaos!");
-    ImGui::Text("Keyboard input: %c%c%c%c%c%c", input.forward ? 'W' : '-',
-                input.left ? 'A' : '-', input.back ? 'S' : '-',
-                input.right ? 'D' : '-', input.down ? 'Q' : '-',
-                input.up ? 'E' : '-');
+    ImGui::Begin("Hello, Chaos!");
+    ImGui::Text(
+        "Keyboard input: %c%c%c%c%c%c", input.move_input.forward ? 'W' : '-',
+        input.move_input.left ? 'A' : '-',
+        input.move_input.backward ? 'S' : '-',
+        input.move_input.right ? 'D' : '-', input.move_input.down ? 'Q' : '-',
+        input.move_input.up ? 'E' : '-');
+    if (input.is_rendering) {
+        ImGui::Text("Rendering...");
+    } else {
+        if (ImGui::Button("Render")) {
+            input.to_render = true;
+        }
+    }
     ImGui::End();
 
     ImGui::Render();
@@ -197,18 +205,24 @@ int main(int argc, char **argv) {
             }
         }
 
-        input.forward = keys[SDL_SCANCODE_W];
-        input.back = keys[SDL_SCANCODE_S];
-        input.left = keys[SDL_SCANCODE_A];
-        input.right = keys[SDL_SCANCODE_D];
-        input.up = keys[SDL_SCANCODE_E];
-        input.down = keys[SDL_SCANCODE_Q];
+        input.move_input.forward = keys[SDL_SCANCODE_W];
+        input.move_input.backward = keys[SDL_SCANCODE_S];
+        input.move_input.left = keys[SDL_SCANCODE_A];
+        input.move_input.right = keys[SDL_SCANCODE_D];
+        input.move_input.up = keys[SDL_SCANCODE_E];
+        input.move_input.down = keys[SDL_SCANCODE_Q];
 
-        if (input.forward) {
-            Rays_Camera_Render();
+        if (Rays_Camera_Move(input.move_input)) {
+            input.is_rendering = false;
         }
 
-        FetchImageData();
+        if (input.to_render) {
+            Rays_Camera_Render();
+            input.to_render = false;
+            input.is_rendering = true;
+        } else if (input.is_rendering) {
+            FetchImageData();
+        }
 
         RenderImGUI();
         RenderFrame();

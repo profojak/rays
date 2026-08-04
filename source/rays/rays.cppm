@@ -28,6 +28,39 @@ void Scene_Load(const std::string &path, Loader::Type type) {
     }
 }
 
+/// Move camera based on input.
+bool Camera_Move(const Rays_Camera_MoveInput &input) {
+    auto &camera = State::scene->GetCamera();
+    auto position = camera.GetPosition();
+    bool moved = false;
+    if (input.forward) {
+        position[2] -= 0.1f;
+        moved = true;
+    }
+    if (input.backward) {
+        position[2] += 0.1f;
+        moved = true;
+    }
+    if (input.left) {
+        position[0] -= 0.1f;
+        moved = true;
+    }
+    if (input.right) {
+        position[0] += 0.1f;
+        moved = true;
+    }
+    if (input.up) {
+        position[1] += 0.1f;
+        moved = true;
+    }
+    if (input.down) {
+        position[1] -= 0.1f;
+        moved = true;
+    }
+    camera.SetPosition(position);
+    return moved;
+}
+
 /// Get camera resolution.
 Vector2u Camera_GetResolution() {
     return State::scene->GetCamera().GetFilm().GetResolution();
@@ -48,6 +81,10 @@ void Rays_Greet() { rays::Greet(); }
 
 void Rays_Scene_Load(const char *path, Rays_Scene_Type type) {
     rays::Scene_Load(path, static_cast<rays::Loader::Type>(type));
+}
+
+bool Rays_Camera_Move(const Rays_Camera_MoveInput &input) {
+    return rays::Camera_Move(input);
 }
 
 void Rays_Camera_GetResolution(unsigned int *width, unsigned int *height) {
