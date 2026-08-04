@@ -21,6 +21,9 @@ target_sources(rays
             math/point.cppm
             math/vector.cppm
 
+            object/mesh.cppm
+            object/triangle.cppm
+
             render/scheduler.cppm
             render/tile.cppm
 

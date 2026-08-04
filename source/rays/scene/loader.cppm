@@ -14,7 +14,9 @@ module;
 export module rays:loader;
 
 import :camera;
+import :mesh;
 import :scene;
+import :triangle;
 import :type;
 import :vector;
 
@@ -113,6 +115,8 @@ export class CRTLoader : public Loader {
                     continue;
                 }
 
+                Mesh mesh;
+
                 // Vertices.
                 if (const auto &vertices = object["vertices"];
                     vertices.IsArray() && vertices.Size() % 3 == 0) {
@@ -123,19 +127,23 @@ export class CRTLoader : public Loader {
                             vertices[i].GetFloat(), vertices[i + 1].GetFloat(),
                             vertices[i + 2].GetFloat()});
                     }
-                    // TODO
+                    mesh.vertices = std::move(positions);
                 }
 
                 // Triangles.
                 if (const auto &triangles = object["triangles"];
                     triangles.IsArray() && triangles.Size() % 3 == 0) {
-                    std::vector<UInt> indices;
-                    indices.reserve(triangles.Size());
-                    for (std::size_t i = 0; i < triangles.Size(); ++i) {
-                        indices.push_back(triangles[i].GetUint());
+                    std::vector<Triangle> indices;
+                    indices.reserve(triangles.Size() / 3);
+                    for (std::size_t i = 0; i < triangles.Size(); i += 3) {
+                        indices.push_back(Triangle{triangles[i].GetUint(),
+                                                   triangles[i + 1].GetUint(),
+                                                   triangles[i + 2].GetUint()});
                     }
-                    // TODO
+                    mesh.triangles = std::move(indices);
                 }
+
+                scene->AddMesh(std::move(mesh));
             }
         }
 
