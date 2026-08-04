@@ -5,6 +5,7 @@ module;
 export module rays:camera;
 
 import :film;
+import :matrix;
 import :montecarlo;
 import :scheduler;
 import :thread;
@@ -31,6 +32,12 @@ export template <std::floating_point T> class Camera {
         scheduler_.SetFilmSize(film_size);
     }
 
+    /// Set camera position.
+    void SetPosition(const Vector3f &position) { position_ = position; }
+
+    /// Set camera rotation.
+    void SetRotation(const Matrix3f &rotation) { rotation_ = rotation; }
+
     /// Kick off render only if no render is currently in progress.
     void Render(ThreadPool &thread_pool) {
         if (!thread_pool.IsIdle()) {
@@ -41,6 +48,11 @@ export template <std::floating_point T> class Camera {
     }
 
   private:
+    /// Camera position.
+    Vector3f position_{};
+    /// Camera rotation.
+    Matrix3f rotation_{};
+
     /// Camera film.
     Film<T> film_{Vector2u{1280, 720}};
     /// Monte Carlo integrator.

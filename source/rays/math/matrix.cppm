@@ -35,6 +35,14 @@ export template <arithmetic T, std::size_t R, std::size_t C> struct Matrix {
         requires(sizeof...(Us) == R * C && sizeof...(Us) != 1)
     Matrix(const Us... scalars) : data{static_cast<T>(scalars)...} {}
 
+    /// Construct from `array`.
+    template <std::size_t N>
+    Matrix(const std::array<T, N> &other)
+        requires(N == R * C)
+    {
+        std::copy(other.begin(), other.end(), this->data.begin());
+    }
+
     /// Construct from `Matrix`.
     template <arithmetic U> Matrix(const Matrix<U, R, C> &other) {
         linalg::copy(other.View(), this->View());

@@ -86,14 +86,14 @@ export class CRTLoader : public Loader {
 
         // Camera.
         if (const auto &camera = document["camera"]; camera.IsObject()) {
-            // View matrix.
+            // Rotation matrix.
             if (const auto &matrix = camera["matrix"];
                 matrix.IsArray() && matrix.Size() == 9) {
-                std::array<Float, 9> view_matrix{};
+                std::array<Float, 9> rotation_matrix{};
                 for (std::size_t i = 0; i < 9; ++i) {
-                    view_matrix[i] = matrix[i].GetFloat();
+                    rotation_matrix[i] = matrix[i].GetFloat();
                 }
-                // TODO
+                scene->GetCamera().SetRotation(Matrix3f{rotation_matrix});
             }
 
             // Camera position.
@@ -102,7 +102,7 @@ export class CRTLoader : public Loader {
                 [[maybe_unused]] const Vector3f position{
                     position_value[0].GetFloat(), position_value[1].GetFloat(),
                     position_value[2].GetFloat()};
-                // TODO
+                scene->GetCamera().SetPosition(position);
             }
         }
 
