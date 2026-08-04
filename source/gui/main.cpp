@@ -214,6 +214,12 @@ int main(int argc, char **argv) {
 
         if (Rays_Camera_Move(input.move_input)) {
             input.is_rendering = false;
+            Uint64 const elapsed = SDL_GetTicks() - frame_start;
+            Uint64 const remaining = elapsed < target_frame_time_ms
+                                         ? target_frame_time_ms - elapsed
+                                         : Uint64{0};
+            Rays_Camera_Preview(remaining);
+            FetchImageData();
         }
 
         if (input.to_render) {

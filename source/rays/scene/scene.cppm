@@ -29,6 +29,11 @@ export class Scene {
         camera_.Render(thread_pool, meshes_);
     }
 
+    /// Preview scene with fast rendering.
+    void Preview(ThreadPool &thread_pool, unsigned long long time_budget) {
+        camera_.Preview(thread_pool, time_budget, meshes_);
+    }
+
   private:
     /// Camera.
     Camera<Float> camera_;

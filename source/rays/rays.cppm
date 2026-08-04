@@ -74,6 +74,11 @@ const void *Camera_ImageData() {
 /// Render scene to film.
 void Camera_Render() { State::scene->Render(State::thread_pool); }
 
+/// Preview scene with fast rendering.
+void Camera_Preview(unsigned long long time_budget) {
+    State::scene->Preview(State::thread_pool, time_budget);
+}
+
 } // namespace rays
 
 extern "C" { // C API
@@ -96,4 +101,8 @@ void Rays_Camera_GetResolution(unsigned int *width, unsigned int *height) {
 const void *Rays_Camera_ImageData() { return rays::Camera_ImageData(); }
 
 void Rays_Camera_Render() { rays::Camera_Render(); }
+
+void Rays_Camera_Preview(unsigned long long time_budget) {
+    rays::Camera_Preview(time_budget);
+}
 }
