@@ -3,6 +3,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/deps/doctest doctest)
 add_executable(tests
     main.cpp
 
+    math/matrix.cpp
     math/vector.cpp
     math/point.cpp
 
