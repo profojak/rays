@@ -2,6 +2,7 @@ module;
 
 #include "math/math.hpp" // IWYU pragma: keep
 
+#include <array>
 #include <concepts>
 #include <optional>
 
@@ -82,36 +83,54 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
         return Ray3f{this->position_, direction};
     }
 
-    /// Shade ray against all meshes of scene.
+    /// Find closest intersection along ray across all meshes.
     [[nodiscard]] std::optional<Pixel<T>>
     Intersect(const Ray3f &ray) const noexcept {
-        for (const auto &mesh : *this->meshes_) {
+        std::optional<TriangleIntersection3f> closest;
+        std::array<Vector3f, 3> closest_vertices;
+        UInt closest_mesh = 0;
+
+        for (UInt i = 0; i < this->meshes_->size(); ++i) {
+            const auto &mesh = (*this->meshes_)[i];
             const auto &vertices = mesh.vertices;
             for (const auto &triangle : mesh.triangles) {
-                if (const auto intersection = triangle.Intersect(
-                        ray, vertices[triangle.a], vertices[triangle.b],
-                        vertices[triangle.c])) {
-                    const Vector3f edge1 =
-                        vertices[triangle.b] - vertices[triangle.a];
-                    const Vector3f edge2 =
-                        vertices[triangle.c] - vertices[triangle.a];
-                    Vector3f normal{edge1[1] * edge2[2] - edge1[2] * edge2[1],
-                                    edge1[2] * edge2[0] - edge1[0] * edge2[2],
-                                    edge1[0] * edge2[1] - edge1[1] * edge2[0]};
-                    normal.Normalize();
-
-                    if (linalg::dot(normal.View(), ray.direction.View()) >
-                        Float{0}) {
-                        normal = -normal;
-                    }
-                    const auto facing =
-                        -linalg::dot(normal.View(), ray.direction.View());
-                    const auto shade = static_cast<T>(facing);
-                    return Pixel<T>{shade, shade, shade};
+                const auto intersection = triangle.Intersect(
+                    ray, vertices[triangle.a], vertices[triangle.b],
+                    vertices[triangle.c]);
+                if (intersection &&
+                    (!closest || intersection->t < closest->t)) {
+                    closest = intersection;
+                    closest_vertices[0] = vertices[triangle.a];
+                    closest_vertices[1] = vertices[triangle.b];
+                    closest_vertices[2] = vertices[triangle.c];
+                    closest_mesh = i;
                 }
             }
         }
-        return std::nullopt;
+        if (!closest) {
+            return std::nullopt;
+        }
+
+        return Shade(ray, closest_vertices, closest_mesh);
+    }
+
+    /// Shade triangle facing toward camera.
+    [[nodiscard]] static Pixel<T> Shade(const Ray3f &ray,
+                                        const std::array<Vector3f, 3> &vertices,
+                                        const UInt mesh_index) noexcept {
+        const Vector3f edge1 = vertices[1] - vertices[0];
+        const Vector3f edge2 = vertices[2] - vertices[0];
+        Vector3f normal{edge1[1] * edge2[2] - edge1[2] * edge2[1],
+                        edge1[2] * edge2[0] - edge1[0] * edge2[2],
+                        edge1[0] * edge2[1] - edge1[1] * edge2[0]};
+        normal.Normalize();
+
+        if (linalg::dot(normal.View(), ray.direction.View()) > Float{0}) {
+            normal = -normal;
+        }
+        const auto facing = -linalg::dot(normal.View(), ray.direction.View());
+        const auto shade = static_cast<T>(facing);
+        return Pixel<T>{shade, shade, shade};
     }
 };
 
