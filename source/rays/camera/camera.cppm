@@ -2,7 +2,6 @@ module;
 
 #include <chrono>
 #include <concepts>
-#include <thread>
 #include <vector>
 
 export module rays:camera;
@@ -48,6 +47,9 @@ export template <std::floating_point T> class Camera {
 
     /// Set camera rotation.
     void SetRotation(const Matrix3f &rotation) { rotation_ = rotation; }
+
+    /// Get camera rotation.
+    [[nodiscard]] Matrix3f GetRotation() const { return rotation_; }
 
     /// Kick off render only if no render is currently in progress.
     void Render(ThreadPool &thread_pool, const std::vector<Mesh> &meshes) {

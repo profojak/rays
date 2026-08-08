@@ -37,10 +37,21 @@ struct Input {
     bool is_rendering = false;
     /// Camera move input.
     Rays_Camera_MoveInput move_input;
+    /// Camera rotate input.
+    Rays_Camera_RotateInput rotate_input;
+    /// Whether left mouse button is dragging.
+    bool dragging = false;
+    /// Last mouse X position.
+    float last_mouse_x = 0.0f;
+    /// Last mouse Y position.
+    float last_mouse_y = 0.0f;
 } input;
 
 /// Frame duration for 60 FPS.
 constexpr static Uint64 target_frame_time_ms = 1000 / 60;
+
+/// Camera rotation sensitivity in radians per pixel.
+constexpr static float rotation_sensitivity = 0.003f;
 
 /// Shutdown SDL.
 void ShutdownSDL() {
@@ -172,6 +183,30 @@ void FetchImageData() {
     }
 }
 
+/// Process input events.
+void ProcessInput() {
+    bool const *keys = SDL_GetKeyboardState(nullptr);
+    input.move_input.forward = keys[SDL_SCANCODE_W];
+    input.move_input.backward = keys[SDL_SCANCODE_S];
+    input.move_input.left = keys[SDL_SCANCODE_A];
+    input.move_input.right = keys[SDL_SCANCODE_D];
+    input.move_input.up = keys[SDL_SCANCODE_E];
+    input.move_input.down = keys[SDL_SCANCODE_Q];
+
+    float mouse_x, mouse_y;
+    Uint32 const buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
+    input.dragging =
+        (buttons & SDL_BUTTON_LMASK) != 0 && !ImGui::GetIO().WantCaptureMouse;
+    input.rotate_input.yaw =
+        input.dragging ? (mouse_x - input.last_mouse_x) * rotation_sensitivity
+                       : 0.0f;
+    input.rotate_input.pitch =
+        input.dragging ? -(mouse_y - input.last_mouse_y) * rotation_sensitivity
+                       : 0.0f;
+    input.last_mouse_x = mouse_x;
+    input.last_mouse_y = mouse_y;
+}
+
 int main(int argc, char **argv) {
     Rays_Greet();
 
@@ -191,8 +226,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    bool const *keys = SDL_GetKeyboardState(nullptr);
-
     bool running = true;
     while (running) {
         Uint64 const frame_start = SDL_GetTicks();
@@ -205,14 +238,10 @@ int main(int argc, char **argv) {
             }
         }
 
-        input.move_input.forward = keys[SDL_SCANCODE_W];
-        input.move_input.backward = keys[SDL_SCANCODE_S];
-        input.move_input.left = keys[SDL_SCANCODE_A];
-        input.move_input.right = keys[SDL_SCANCODE_D];
-        input.move_input.up = keys[SDL_SCANCODE_E];
-        input.move_input.down = keys[SDL_SCANCODE_Q];
+        ProcessInput();
 
-        if (Rays_Camera_Move(input.move_input)) {
+        if (Rays_Camera_Move(input.move_input) |
+            Rays_Camera_Rotate(input.rotate_input)) {
             input.is_rendering = false;
             Uint64 const elapsed = SDL_GetTicks() - frame_start;
             Uint64 const remaining = elapsed < target_frame_time_ms

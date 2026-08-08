@@ -10,6 +10,13 @@ struct Rays_Camera_MoveInput {
     bool up = false;
     bool down = false;
 };
+/// Camera rotation input state in radians.
+struct Rays_Camera_RotateInput {
+    /// Yaw delta, positive turns right.
+    float yaw = 0.0f;
+    /// Pitch delta, positive looks up.
+    float pitch = 0.0f;
+};
 
 /// Greet folks from Chaos!
 void Rays_Greet();
@@ -17,6 +24,8 @@ void Rays_Greet();
 void Rays_Scene_Load(const char *path, Rays_Scene_Type type);
 /// Move camera based on input.
 bool Rays_Camera_Move(const Rays_Camera_MoveInput &input);
+/// Rotate camera based on yaw and pitch deltas in radians.
+bool Rays_Camera_Rotate(const Rays_Camera_RotateInput &input);
 /// Get camera resolution.
 void Rays_Camera_GetResolution(unsigned int *width, unsigned int *height);
 /// Get pointer to image data.

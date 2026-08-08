@@ -1,5 +1,6 @@
 module;
 
+#include <cmath>
 #include <memory>
 #include <print>
 #include <string>
@@ -61,6 +62,31 @@ bool Camera_Move(const Rays_Camera_MoveInput &input) {
     return moved;
 }
 
+/// Rotate camera based on yaw and pitch deltas in radians.
+bool Camera_Rotate(const Rays_Camera_RotateInput &input) {
+    if (input.yaw == 0.0f && input.pitch == 0.0f) {
+        return false;
+    }
+
+    auto &camera = State::scene->GetCamera();
+
+    const Float cos_yaw = std::cos(input.yaw);
+    const Float sin_yaw = std::sin(input.yaw);
+    // Yaw rotates camera around world up axis, positive turns right.
+    const Matrix3f yaw_rotation{cos_yaw, 0.0f,    -sin_yaw, 0.0f,   1.0f,
+                                0.0f,    sin_yaw, 0.0f,     cos_yaw};
+
+    const Float cos_pitch = std::cos(input.pitch);
+    const Float sin_pitch = std::sin(input.pitch);
+    // Pitch rotates camera around its local right axis, positive looks up.
+    const Matrix3f pitch_rotation{1.0f, 0.0f,      0.0f,
+                                  0.0f, cos_pitch, -sin_pitch,
+                                  0.0f, sin_pitch, cos_pitch};
+
+    camera.SetRotation(yaw_rotation * camera.GetRotation() * pitch_rotation);
+    return true;
+}
+
 /// Get camera resolution.
 Vector2u Camera_GetResolution() {
     return State::scene->GetCamera().GetFilm().GetResolution();
@@ -90,6 +116,10 @@ void Rays_Scene_Load(const char *path, Rays_Scene_Type type) {
 
 bool Rays_Camera_Move(const Rays_Camera_MoveInput &input) {
     return rays::Camera_Move(input);
+}
+
+bool Rays_Camera_Rotate(const Rays_Camera_RotateInput &input) {
+    return rays::Camera_Rotate(input);
 }
 
 void Rays_Camera_GetResolution(unsigned int *width, unsigned int *height) {
