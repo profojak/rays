@@ -1,7 +1,9 @@
 module;
 
+#include "math/math.hpp" // IWYU pragma: keep
+
 #include <concepts>
-#include <limits>
+#include <optional>
 
 export module rays:preview;
 
@@ -49,8 +51,11 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
                     sample = film.PixelAt(min_x, min_y);
                 } else {
                     const auto ray = GenerateRay(min_x, min_y, resolution);
-                    sample = Intersect(ray) ? Pixel<T>{T{1}, T{1}, T{1}}
-                                            : film.GetBackground();
+                    if (const auto pixel = Intersect(ray)) {
+                        sample = *pixel;
+                    } else {
+                        sample = film.GetBackground();
+                    }
                 }
 
                 for (UInt pixel_y = min_y; pixel_y < max_y; ++pixel_y) {
@@ -77,20 +82,36 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
         return Ray3f{this->position_, direction};
     }
 
-    /// Test ray against all meshes of scene.
-    [[nodiscard]] bool Intersect(const Ray3f &ray) const noexcept {
-        auto t = std::numeric_limits<Float>::infinity();
+    /// Shade ray against all meshes of scene.
+    [[nodiscard]] std::optional<Pixel<T>>
+    Intersect(const Ray3f &ray) const noexcept {
         for (const auto &mesh : *this->meshes_) {
             const auto &vertices = mesh.vertices;
             for (const auto &triangle : mesh.triangles) {
-                if (triangle.Intersect(ray, vertices[triangle.a],
-                                       vertices[triangle.b],
-                                       vertices[triangle.c], t)) {
-                    return true;
+                if (const auto intersection = triangle.Intersect(
+                        ray, vertices[triangle.a], vertices[triangle.b],
+                        vertices[triangle.c])) {
+                    const Vector3f edge1 =
+                        vertices[triangle.b] - vertices[triangle.a];
+                    const Vector3f edge2 =
+                        vertices[triangle.c] - vertices[triangle.a];
+                    Vector3f normal{edge1[1] * edge2[2] - edge1[2] * edge2[1],
+                                    edge1[2] * edge2[0] - edge1[0] * edge2[2],
+                                    edge1[0] * edge2[1] - edge1[1] * edge2[0]};
+                    normal.Normalize();
+
+                    if (linalg::dot(normal.View(), ray.direction.View()) >
+                        Float{0}) {
+                        normal = -normal;
+                    }
+                    const auto facing =
+                        -linalg::dot(normal.View(), ray.direction.View());
+                    const auto shade = static_cast<T>(facing);
+                    return Pixel<T>{shade, shade, shade};
                 }
             }
         }
-        return false;
+        return std::nullopt;
     }
 };
 

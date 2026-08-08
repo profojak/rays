@@ -2,6 +2,8 @@ module;
 
 #include "math/math.hpp" // IWYU pragma: keep
 
+#include <optional>
+
 export module rays:triangle;
 
 import :ray;
@@ -17,9 +19,9 @@ export struct Triangle {
     UInt a, b, c;
 
     /// Test ray against triangle with given vertex positions.
-    [[nodiscard]] bool Intersect(const Ray3f &ray, const Vector3f &v0,
-                                 const Vector3f &v1, const Vector3f &v2,
-                                 Float &t) const noexcept {
+    [[nodiscard]] std::optional<TriangleIntersection3f>
+    Intersect(const Ray3f &ray, const Vector3f &v0, const Vector3f &v1,
+              const Vector3f &v2) const noexcept {
         const Vector3f edge1 = v1 - v0;
         const Vector3f edge2 = v2 - v0;
 
@@ -32,7 +34,7 @@ export struct Triangle {
         // Determinant, zero means ray is parallel to triangle.
         const Float det = linalg::dot(edge1.View(), pvec.View());
         if (det == Float{0}) {
-            return false;
+            return std::nullopt;
         }
         const Float inv_det = Float{1} / det;
 
@@ -40,7 +42,7 @@ export struct Triangle {
         const Vector3f tvec = ray.origin - v0;
         const Float u = linalg::dot(tvec.View(), pvec.View()) * inv_det;
         if (u < Float{0} || u > Float{1}) {
-            return false;
+            return std::nullopt;
         }
 
         // Barycentric coordinate v.
@@ -50,16 +52,16 @@ export struct Triangle {
         const Float v =
             linalg::dot(ray.direction.View(), qvec.View()) * inv_det;
         if (v < Float{0} || u + v > Float{1}) {
-            return false;
+            return std::nullopt;
         }
 
         // Distance from ray origin to intersection.
         const Float tt = linalg::dot(edge2.View(), qvec.View()) * inv_det;
-        if (tt <= Float{0} || tt >= t) {
-            return false;
+        if (tt <= Float{0}) {
+            return std::nullopt;
         }
-        t = tt;
-        return true;
+
+        return TriangleIntersection3f{tt, {u, v}};
     }
 };
 

@@ -1,7 +1,6 @@
 module;
 
 #include <concepts>
-#include <limits>
 
 export module rays:montecarlo;
 
@@ -60,13 +59,12 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
 
     /// Test ray against all meshes of scene.
     [[nodiscard]] bool Intersect(const Ray3f &ray) const noexcept {
-        auto t = std::numeric_limits<Float>::infinity();
         for (const auto &mesh : *this->meshes_) {
             const auto &vertices = mesh.vertices;
             for (const auto &triangle : mesh.triangles) {
                 if (triangle.Intersect(ray, vertices[triangle.a],
                                        vertices[triangle.b],
-                                       vertices[triangle.c], t)) {
+                                       vertices[triangle.c])) {
                     return true;
                 }
             }
