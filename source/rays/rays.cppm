@@ -29,33 +29,41 @@ void Scene_Load(const std::string &path, Loader::Type type) {
     }
 }
 
-/// Move camera based on input.
+/// Move camera relative to view direction.
 bool Camera_Move(const Rays_Camera_MoveInput &input) {
     auto &camera = State::scene->GetCamera();
     auto position = camera.GetPosition();
+    const Matrix3f rotation = camera.GetRotation();
+
+    // Camera local axes mapped to world space.
+    const Vector3f forward = rotation * Vector3f{0.0f, 0.0f, -1.0f};
+    const Vector3f right = rotation * Vector3f{1.0f, 0.0f, 0.0f};
+    const Vector3f up = rotation * Vector3f{0.0f, 1.0f, 0.0f};
+
+    constexpr Float move_step = 0.1f;
     bool moved = false;
     if (input.forward) {
-        position[2] -= 0.1f;
+        position += forward * move_step;
         moved = true;
     }
     if (input.backward) {
-        position[2] += 0.1f;
+        position -= forward * move_step;
         moved = true;
     }
     if (input.left) {
-        position[0] -= 0.1f;
+        position -= right * move_step;
         moved = true;
     }
     if (input.right) {
-        position[0] += 0.1f;
+        position += right * move_step;
         moved = true;
     }
     if (input.up) {
-        position[1] += 0.1f;
+        position += up * move_step;
         moved = true;
     }
     if (input.down) {
-        position[1] -= 0.1f;
+        position -= up * move_step;
         moved = true;
     }
     camera.SetPosition(position);

@@ -22,7 +22,7 @@ struct Rays_Camera_RotateInput {
 void Rays_Greet();
 /// Load scene from file.
 void Rays_Scene_Load(const char *path, Rays_Scene_Type type);
-/// Move camera based on input.
+/// Move camera relative to view direction.
 bool Rays_Camera_Move(const Rays_Camera_MoveInput &input);
 /// Rotate camera based on yaw and pitch deltas in radians.
 bool Rays_Camera_Rotate(const Rays_Camera_RotateInput &input);
