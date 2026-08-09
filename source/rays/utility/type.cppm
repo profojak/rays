@@ -28,4 +28,6 @@ export using UInt = std::uint32_t;
 export template <typename T>
 concept arithmetic = std::integral<T> || std::floating_point<T>;
 
+export Float Epsilon = 1e-5f;
+
 } // namespace rays
