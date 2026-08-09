@@ -7,11 +7,12 @@ import :vector;
 
 namespace rays {
 
-/// Abstract base class for all lights.
+/// Base class for all lights.
 export class Light {
 
   public:
-    virtual ~Light() = 0;
+    Light(Float intensity, Vector3f position)
+        : intensity_{intensity}, position_{position} {}
 
     /// Return light intensity.
     virtual Float Intensity() const { return intensity_; }
@@ -25,9 +26,12 @@ export class Light {
     Vector3f position_;
 };
 
-Light::~Light() = default;
-
 /// Point light.
-export class PointLight : public Light {};
+export class PointLight : public Light {
+
+  public:
+    PointLight(Float intensity, Vector3f position)
+        : Light{intensity, position} {}
+};
 
 } // namespace rays

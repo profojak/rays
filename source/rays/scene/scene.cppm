@@ -6,6 +6,7 @@ module;
 export module rays:scene;
 
 import :camera;
+import :light;
 import :mesh;
 import :thread;
 import :type;
@@ -24,14 +25,17 @@ export class Scene {
     /// Add `Mesh` to scene.
     void AddMesh(const Mesh &&mesh) { meshes_.push_back(std::move(mesh)); }
 
+    /// Add `Light` to scene.
+    void AddLight(const Light &&light) { lights_.push_back(std::move(light)); }
+
     /// Render scene to film.
     void Render(ThreadPool &thread_pool) {
-        camera_.Render(thread_pool, meshes_);
+        camera_.Render(thread_pool, meshes_, lights_);
     }
 
     /// Preview scene with fast rendering.
     void Preview(ThreadPool &thread_pool, unsigned long long time_budget) {
-        camera_.Preview(thread_pool, time_budget, meshes_);
+        camera_.Preview(thread_pool, time_budget, meshes_, lights_);
     }
 
   private:
@@ -39,6 +43,8 @@ export class Scene {
     Camera<Float> camera_;
     /// Meshes.
     std::vector<Mesh> meshes_;
+    /// Lights.
+    std::vector<Light> lights_;
 };
 
 } // namespace rays

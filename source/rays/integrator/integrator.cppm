@@ -8,6 +8,7 @@ module;
 export module rays:integrator;
 
 import :film;
+import :light;
 import :mesh;
 import :matrix;
 import :pixel;
@@ -25,7 +26,8 @@ export template <std::floating_point T> class Integrator {
     /// Pure virtual function to render scene.
     virtual void Render(const Vector3f &camera_position,
                         const Matrix3f &camera_rotation,
-                        const std::vector<Mesh> &meshes, Film<T> &film,
+                        const std::vector<Mesh> &meshes,
+                        const std::vector<Light> &lights, Film<T> &film,
                         Scheduler<T> &scheduler, ThreadPool &thread_pool) = 0;
 
     ~Integrator() = default;
@@ -40,11 +42,13 @@ class SamplingIntegrator : public Integrator<T> {
     /// Render scene using ray sampling.
     void Render(const Vector3f &camera_position,
                 const Matrix3f &camera_rotation,
-                const std::vector<Mesh> &meshes, Film<T> &film,
+                const std::vector<Mesh> &meshes,
+                const std::vector<Light> &lights, Film<T> &film,
                 Scheduler<T> &scheduler, ThreadPool &thread_pool) override {
         position_ = camera_position;
         rotation_ = camera_rotation;
         meshes_ = &meshes;
+        lights_ = &lights;
         const auto num_threads = thread_pool.Size();
         for (std::size_t i = 0; i < num_threads; ++i) {
             thread_pool.Submit([this, &film, &scheduler] {
@@ -83,6 +87,8 @@ class SamplingIntegrator : public Integrator<T> {
 
     /// Scene meshes during render.
     const std::vector<Mesh> *meshes_{};
+    /// Scene lights during render.
+    const std::vector<Light> *lights_{};
 };
 
 } // namespace rays

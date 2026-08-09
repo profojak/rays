@@ -5,15 +5,14 @@ module;
 #include <array>
 #include <cstddef>
 #include <fstream>
-#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <vector>
 
 export module rays:loader;
 
 import :camera;
+import :light;
 import :mesh;
 import :scene;
 import :triangle;
@@ -105,6 +104,34 @@ export class CRTLoader : public Loader {
                     position_value[0].GetFloat(), position_value[1].GetFloat(),
                     position_value[2].GetFloat()};
                 scene->GetCamera().SetPosition(position);
+            }
+        }
+
+        // Lights.
+        if (const auto &lights = document["lights"]; lights.IsArray()) {
+            for (const auto &light : lights.GetArray()) {
+                if (!light.IsObject()) {
+                    continue;
+                }
+
+                Float intensity = 0.0f;
+                Vector3f position{0.0f};
+
+                // Light intensity.
+                if (const auto &intensity_value = light["intensity"];
+                    intensity_value.IsNumber()) {
+                    intensity = intensity_value.GetFloat();
+                }
+
+                // Light position.
+                if (const auto &position_value = light["position"];
+                    position_value.IsArray() && position_value.Size() == 3) {
+                    position = Vector3f{position_value[0].GetFloat(),
+                                        position_value[1].GetFloat(),
+                                        position_value[2].GetFloat()};
+                }
+
+                scene->AddLight(PointLight{intensity, position});
             }
         }
 
