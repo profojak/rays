@@ -170,6 +170,7 @@ export class CRTLoader : public Loader {
                     mesh.triangles = std::move(indices);
                 }
 
+                mesh.RecalculateNormals();
                 scene->AddMesh(std::move(mesh));
             }
         }

@@ -1,6 +1,6 @@
 module;
 
-#include "math/math.hpp"
+#include "math/math.hpp" // IWYU pragma: keep
 
 #include <algorithm>
 #include <concepts>
@@ -70,15 +70,15 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
         const auto &v1 = mesh.vertices[triangle.b];
         const auto &v2 = mesh.vertices[triangle.c];
 
-        const Vector3f edge1 = v1 - v0;
-        const Vector3f edge2 = v2 - v0;
-        const Vector3f hit =
-            v0 + edge1 * (*intersection).uv[0] + edge2 * (*intersection).uv[1];
-        Vector3f normal = Vector3f::Cross(edge1, edge2);
-        normal.Normalize();
-
         Vector3f color{0.0f};
         if (!this->lights_->empty()) {
+            const Vector3f edge1 = v1 - v0;
+            const Vector3f edge2 = v2 - v0;
+            const Vector3f hit = v0 + edge1 * (*intersection).uv[0] +
+                                 edge2 * (*intersection).uv[1];
+            Vector3f normal = mesh.face_normals[(*intersection).triangle_index];
+            normal.Normalize();
+
             const auto &light =
                 (*this->lights_)[Random::Range(this->lights_->size())];
             Vector3f light_direction = light->Position() - hit;

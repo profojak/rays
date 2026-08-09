@@ -150,15 +150,7 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
     Shade(const Ray3f &ray,
           const TriangleIntersection3f &intersection) const noexcept {
         const auto &mesh = (*this->meshes_)[intersection.mesh_index];
-        const auto &triangle = mesh.triangles[intersection.triangle_index];
-        const auto &v0 = mesh.vertices[triangle.a];
-        const auto &v1 = mesh.vertices[triangle.b];
-        const auto &v2 = mesh.vertices[triangle.c];
-
-        const Vector3f edge1 = v1 - v0;
-        const Vector3f edge2 = v2 - v0;
-        Vector3f normal = Vector3f::Cross(edge1, edge2);
-        normal.Normalize();
+        Vector3f normal = mesh.face_normals[intersection.triangle_index];
 
         if (linalg::dot(normal.View(), ray.direction.View()) > 0.0f) {
             normal = -normal;
