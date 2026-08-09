@@ -36,6 +36,7 @@ target_sources(rays
             state/state.cppm
             state/thread.cppm
 
+            utility/random.cppm
             utility/type.cppm
 
         FILE_SET headers
