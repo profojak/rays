@@ -35,6 +35,13 @@ export template <arithmetic T, std::size_t N> struct Vector {
         *this /= norm;
     }
 
+    /// Cross product of two vectors.
+    [[nodiscard]] static Vector Cross(const Vector &a,
+                                      const Vector &b) noexcept {
+        return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
+                a[0] * b[1] - a[1] * b[0]};
+    }
+
     /// Access element by index.
     template <typename Self>
     [[nodiscard]] constexpr auto operator[](this Self &&self,

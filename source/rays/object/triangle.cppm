@@ -25,11 +25,8 @@ export struct Triangle {
         const Vector3f edge1 = v1 - v0;
         const Vector3f edge2 = v2 - v0;
 
-        // Cross product of ray direction and edge2.
-        const Vector3f pvec{
-            ray.direction[1] * edge2[2] - ray.direction[2] * edge2[1],
-            ray.direction[2] * edge2[0] - ray.direction[0] * edge2[2],
-            ray.direction[0] * edge2[1] - ray.direction[1] * edge2[0]};
+        // Cross product of ray direction and `edge2`.
+        const Vector3f pvec = Vector3f::Cross(ray.direction, edge2);
 
         // Determinant, zero means ray is parallel to triangle.
         const Float det = linalg::dot(edge1.View(), pvec.View());
@@ -38,17 +35,15 @@ export struct Triangle {
         }
         const Float inv_det = Float{1} / det;
 
-        // Barycentric coordinate u.
+        // Barycentric coordinate `u`.
         const Vector3f tvec = ray.origin - v0;
         const Float u = linalg::dot(tvec.View(), pvec.View()) * inv_det;
         if (u < Float{0} || u > Float{1}) {
             return std::nullopt;
         }
 
-        // Barycentric coordinate v.
-        const Vector3f qvec{tvec[1] * edge1[2] - tvec[2] * edge1[1],
-                            tvec[2] * edge1[0] - tvec[0] * edge1[2],
-                            tvec[0] * edge1[1] - tvec[1] * edge1[0]};
+        // Barycentric coordinate `v`.
+        const Vector3f qvec = Vector3f::Cross(tvec, edge1);
         const Float v =
             linalg::dot(ray.direction.View(), qvec.View()) * inv_det;
         if (v < Float{0} || u + v > Float{1}) {

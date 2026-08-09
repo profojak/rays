@@ -100,9 +100,9 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
                 if (intersection &&
                     (!closest || intersection->t < closest->t)) {
                     closest = intersection;
-                    closest_vertices[0] = vertices[triangle.a];
-                    closest_vertices[1] = vertices[triangle.b];
-                    closest_vertices[2] = vertices[triangle.c];
+                    closest_vertices = {vertices[triangle.a],
+                                        vertices[triangle.b],
+                                        vertices[triangle.c]};
                     closest_mesh = i;
                 }
             }
@@ -120,9 +120,7 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
                                         const UInt mesh_index) noexcept {
         const Vector3f edge1 = vertices[1] - vertices[0];
         const Vector3f edge2 = vertices[2] - vertices[0];
-        Vector3f normal{edge1[1] * edge2[2] - edge1[2] * edge2[1],
-                        edge1[2] * edge2[0] - edge1[0] * edge2[2],
-                        edge1[0] * edge2[1] - edge1[1] * edge2[0]};
+        Vector3f normal = Vector3f::Cross(edge1, edge2);
         normal.Normalize();
 
         if (linalg::dot(normal.View(), ray.direction.View()) > Float{0}) {
