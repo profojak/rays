@@ -1,5 +1,7 @@
 module;
 
+#include <concepts>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -26,7 +28,9 @@ export class Scene {
     void AddMesh(const Mesh &&mesh) { meshes_.push_back(std::move(mesh)); }
 
     /// Add `Light` to scene.
-    void AddLight(const Light &&light) { lights_.push_back(std::move(light)); }
+    template <std::derived_from<Light> L> void AddLight(const L &light) {
+        lights_.push_back(std::make_unique<L>(light));
+    }
 
     /// Render scene to film.
     void Render(ThreadPool &thread_pool) {
@@ -44,7 +48,7 @@ export class Scene {
     /// Meshes.
     std::vector<Mesh> meshes_;
     /// Lights.
-    std::vector<Light> lights_;
+    std::vector<std::unique_ptr<Light>> lights_;
 };
 
 } // namespace rays

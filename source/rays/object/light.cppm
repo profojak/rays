@@ -1,5 +1,7 @@
 module;
 
+#include <utility>
+
 export module rays:light;
 
 import :point;
@@ -14,6 +16,8 @@ export class Light {
   public:
     Light(Float intensity, Point3f position)
         : intensity_{intensity}, position_{position} {}
+
+    virtual ~Light() = default;
 
     /// Return light intensity.
     virtual Float Intensity() const { return intensity_; }
@@ -32,10 +36,12 @@ export class PointLight : public Light {
 
   public:
     PointLight(Float intensity, Point3f position)
-        : Light{intensity, position}, sphere_{position, 1.0f} {}
+        : Light{intensity, position}, sphere_{position, intensity * 0.001f} {}
 
     /// Return light sphere for visualization.
-    Sphere &GetSphere() { return sphere_; }
+    template <typename Self> [[nodiscard]] auto &GetSphere(this Self &&self) {
+        return std::forward<Self>(self).sphere_;
+    }
 
   private:
     /// Sphere representing light source for visualization.

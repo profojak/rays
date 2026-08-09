@@ -4,12 +4,18 @@ module;
 
 #include <cmath>
 #include <concepts>
+#include <limits>
 #include <optional>
+#include <variant>
 
 export module rays:preview;
 
 import :integrator;
+import :light;
+import :ray;
+import :sphere;
 import :type;
+import :vector;
 
 namespace rays {
 
@@ -69,11 +75,15 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
     [[nodiscard]] Vector3f
     Sample(const Ray3f &ray,
            const Vector3f &background) const noexcept override {
-        if (const auto intersection = Intersect(ray)) {
-            return Shade(ray, *intersection);
-        } else {
-            return background;
+        const auto intersection = Intersect(ray);
+        if (const auto *triangle =
+                std::get_if<TriangleIntersection3f>(&intersection)) {
+            return Shade(ray, *triangle);
         }
+        if (std::holds_alternative<SphereIntersection3f>(intersection)) {
+            return Vector3f{1.0f};
+        }
+        return background;
     }
 
     /// Generate primary ray for pixel at film coordinates.
@@ -88,10 +98,13 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
         return Ray3f{this->position_, direction};
     }
 
-    /// Find closest intersection along ray across all meshes.
-    [[nodiscard]] std::optional<TriangleIntersection3f>
+    /// Find closest intersection along ray across all objects.
+    [[nodiscard]] std::variant<std::monostate, TriangleIntersection3f,
+                               SphereIntersection3f>
     Intersect(const Ray3f &ray) const noexcept {
-        std::optional<TriangleIntersection3f> closest_intersection;
+        std::variant<std::monostate, TriangleIntersection3f,
+                     SphereIntersection3f>
+            closest_intersection;
 
         for (UInt i = 0; i < this->meshes_->size(); ++i) {
             const auto &mesh = (*this->meshes_)[i];
@@ -101,17 +114,32 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
                 const auto intersection = triangle.Intersect(
                     ray, vertices[triangle.a], vertices[triangle.b],
                     vertices[triangle.c]);
+                const auto *closest =
+                    std::get_if<TriangleIntersection3f>(&closest_intersection);
                 if (intersection &&
-                    (!closest_intersection ||
-                     intersection->t < closest_intersection->t)) {
-                    closest_intersection = intersection;
-                    closest_intersection->mesh_index = i;
-                    closest_intersection->triangle_index = j;
+                    (!closest || intersection->t < closest->t)) {
+                    TriangleIntersection3f hit = *intersection;
+                    hit.mesh_index = i;
+                    hit.triangle_index = j;
+                    closest_intersection = hit;
                 }
             }
         }
-        if (!closest_intersection) {
-            return std::nullopt;
+
+        // Light spheres closer than any triangle.
+        const auto *closest =
+            std::get_if<TriangleIntersection3f>(&closest_intersection);
+        const Float triangle_t =
+            closest ? closest->t : std::numeric_limits<Float>::infinity();
+        for (const auto &light : *this->lights_) {
+            if (const auto *point_light =
+                    dynamic_cast<const PointLight *>(light.get())) {
+                const auto intersection =
+                    point_light->GetSphere().Intersect(ray);
+                if (intersection && intersection->t < triangle_t) {
+                    return *intersection;
+                }
+            }
         }
 
         return closest_intersection;

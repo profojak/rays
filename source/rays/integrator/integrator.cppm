@@ -2,6 +2,7 @@ module;
 
 #include <concepts>
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -27,8 +28,9 @@ export template <std::floating_point T> class Integrator {
     virtual void Render(const Vector3f &camera_position,
                         const Matrix3f &camera_rotation,
                         const std::vector<Mesh> &meshes,
-                        const std::vector<Light> &lights, Film<T> &film,
-                        Scheduler<T> &scheduler, ThreadPool &thread_pool) = 0;
+                        const std::vector<std::unique_ptr<Light>> &lights,
+                        Film<T> &film, Scheduler<T> &scheduler,
+                        ThreadPool &thread_pool) = 0;
 
     ~Integrator() = default;
 };
@@ -43,8 +45,9 @@ class SamplingIntegrator : public Integrator<T> {
     void Render(const Vector3f &camera_position,
                 const Matrix3f &camera_rotation,
                 const std::vector<Mesh> &meshes,
-                const std::vector<Light> &lights, Film<T> &film,
-                Scheduler<T> &scheduler, ThreadPool &thread_pool) override {
+                const std::vector<std::unique_ptr<Light>> &lights,
+                Film<T> &film, Scheduler<T> &scheduler,
+                ThreadPool &thread_pool) override {
         position_ = camera_position;
         rotation_ = camera_rotation;
         meshes_ = &meshes;
@@ -92,7 +95,7 @@ class SamplingIntegrator : public Integrator<T> {
     /// Scene meshes during render.
     const std::vector<Mesh> *meshes_{};
     /// Scene lights during render.
-    const std::vector<Light> *lights_{};
+    const std::vector<std::unique_ptr<Light>> *lights_{};
 };
 
 } // namespace rays

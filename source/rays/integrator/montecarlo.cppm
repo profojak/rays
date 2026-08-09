@@ -81,7 +81,7 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
         if (!this->lights_->empty()) {
             const auto &light =
                 (*this->lights_)[Random::Range(this->lights_->size())];
-            Vector3f light_direction = light.Position() - hit;
+            Vector3f light_direction = light->Position() - hit;
             const Float distance =
                 linalg::vector_two_norm(light_direction.View());
             light_direction.Normalize();
@@ -93,9 +93,9 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
             if (shadow_intersection && shadow_intersection->t < distance) {
                 color = Vector3f{0.0f};
             } else {
-                const Float sphere_area = 4.0f * std::numbers::pi_v<Float> *
-                                          distance * distance;
-                color += light.Intensity() / sphere_area * cosine *
+                const Float sphere_area =
+                    4.0f * std::numbers::pi_v<Float> * distance * distance;
+                color += light->Intensity() / sphere_area * cosine *
                          static_cast<Float>(this->lights_->size());
             }
         } else {
