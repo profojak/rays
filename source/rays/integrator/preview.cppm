@@ -34,7 +34,6 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
     /// Render single `Tile` of `Film`.
     void RenderTile(Tile<T> &tile, Film<T> &film) override {
         const auto &bounds = tile.Bounds();
-        const auto resolution = film.GetResolution();
         const auto width = bounds.Size(0);
         const auto height = bounds.Size(1);
         const auto max_dim = width > height ? width : height;
@@ -52,7 +51,7 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
                 if (fully_refined || (pass_ > 1 && x % 2 == 0 && y % 2 == 0)) {
                     sample = film.PixelAt(min_x, min_y);
                 } else {
-                    const auto ray = GenerateRay(min_x, min_y, resolution);
+                    const auto ray = GenerateRay(min_x, min_y);
                     if (const auto pixel = Intersect(ray)) {
                         sample = *pixel;
                     } else {
@@ -72,8 +71,7 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
 
   private:
     /// Generate primary ray for pixel at film coordinates.
-    [[nodiscard]] Ray3f GenerateRay(const UInt x, const UInt y,
-                                    const Vector2u &resolution) const noexcept {
+    [[nodiscard]] Ray3f GenerateRay(const UInt x, const UInt y) const noexcept {
         const auto u = static_cast<Float>(x) * this->inverse_uv_[0] - 1.0f;
         const auto v = static_cast<Float>(y) * this->inverse_uv_[1] - 1.0f;
 
