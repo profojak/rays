@@ -28,10 +28,16 @@ struct Intersection {};
 /// Triangle intersection specialization.
 export template <std::floating_point T> struct Intersection<T, Triangle> {
 
+    Intersection(Float t, Vector2f uv) : t{t}, uv{uv} {}
+
     /// Distance along ray to intersection point.
     Float t;
     /// Barycentric UV coordinates of intersection point.
     Vector2f uv;
+    /// Index of mesh containing intersection point.
+    UInt mesh_index{0};
+    /// Index of triangle containing intersection point.
+    UInt triangle_index{0};
 };
 
 export using Ray3f = Ray<Float>;

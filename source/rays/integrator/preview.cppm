@@ -2,7 +2,6 @@ module;
 
 #include "math/math.hpp" // IWYU pragma: keep
 
-#include <array>
 #include <cmath>
 #include <concepts>
 #include <optional>
@@ -52,11 +51,7 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
                     sample = film.PixelAt(min_x, min_y);
                 } else {
                     const auto ray = GenerateRay(min_x, min_y);
-                    if (const auto pixel = Intersect(ray)) {
-                        sample = *pixel;
-                    } else {
-                        sample = film.GetBackground();
-                    }
+                    sample = Sample(ray, film.GetBackground());
                 }
 
                 for (UInt pixel_y = min_y; pixel_y < max_y; ++pixel_y) {
@@ -70,6 +65,17 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
     }
 
   private:
+    /// Sample ray and return color.
+    [[nodiscard]] Vector3f
+    Sample(const Ray3f &ray,
+           const Vector3f &background) const noexcept override {
+        if (const auto intersection = Intersect(ray)) {
+            return Shade(ray, *intersection);
+        } else {
+            return background;
+        }
+    }
+
     /// Generate primary ray for pixel at film coordinates.
     [[nodiscard]] Ray3f GenerateRay(const UInt x, const UInt y) const noexcept {
         const auto u = static_cast<Float>(x) * this->inverse_uv_[0] - 1.0f;
@@ -83,16 +89,15 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
     }
 
     /// Find closest intersection along ray across all meshes.
-    [[nodiscard]] std::optional<Pixel<T>>
+    [[nodiscard]] std::optional<TriangleIntersection3f>
     Intersect(const Ray3f &ray) const noexcept {
         std::optional<TriangleIntersection3f> closest_intersection;
-        std::array<Vector3f, 3> closest_vertices;
-        UInt closest_mesh = 0;
 
         for (UInt i = 0; i < this->meshes_->size(); ++i) {
             const auto &mesh = (*this->meshes_)[i];
             const auto &vertices = mesh.vertices;
-            for (const auto &triangle : mesh.triangles) {
+            for (UInt j = 0; j < mesh.triangles.size(); ++j) {
+                const auto &triangle = mesh.triangles[j];
                 const auto intersection = triangle.Intersect(
                     ray, vertices[triangle.a], vertices[triangle.b],
                     vertices[triangle.c]);
@@ -100,10 +105,8 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
                     (!closest_intersection ||
                      intersection->t < closest_intersection->t)) {
                     closest_intersection = intersection;
-                    closest_vertices = {vertices[triangle.a],
-                                        vertices[triangle.b],
-                                        vertices[triangle.c]};
-                    closest_mesh = i;
+                    closest_intersection->mesh_index = i;
+                    closest_intersection->triangle_index = j;
                 }
             }
         }
@@ -111,15 +114,21 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
             return std::nullopt;
         }
 
-        return Shade(ray, closest_vertices, closest_mesh);
+        return closest_intersection;
     }
 
     /// Shade triangle facing toward camera.
-    [[nodiscard]] static Pixel<T> Shade(const Ray3f &ray,
-                                        const std::array<Vector3f, 3> &vertices,
-                                        const UInt mesh_index) noexcept {
-        const Vector3f edge1 = vertices[1] - vertices[0];
-        const Vector3f edge2 = vertices[2] - vertices[0];
+    [[nodiscard]] Pixel<T>
+    Shade(const Ray3f &ray,
+          const TriangleIntersection3f &intersection) const noexcept {
+        const auto &mesh = (*this->meshes_)[intersection.mesh_index];
+        const auto &triangle = mesh.triangles[intersection.triangle_index];
+        const auto &v0 = mesh.vertices[triangle.a];
+        const auto &v1 = mesh.vertices[triangle.b];
+        const auto &v2 = mesh.vertices[triangle.c];
+
+        const Vector3f edge1 = v1 - v0;
+        const Vector3f edge2 = v2 - v0;
         Vector3f normal = Vector3f::Cross(edge1, edge2);
         normal.Normalize();
 
@@ -127,13 +136,12 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
             normal = -normal;
         }
         const Float shade = -linalg::dot(normal.View(), ray.direction.View());
-        const auto [r, g, b] = MapToRGB(mesh_index);
-        return Pixel<T>{r * shade, g * shade, b * shade};
+        const auto color = MapToRGB(intersection.mesh_index);
+        return Pixel<T>{color[0] * shade, color[1] * shade, color[2] * shade};
     }
 
     /// Map mesh index to RGB color.
-    [[nodiscard]] static std::array<Float, 3>
-    MapToRGB(const UInt mesh_index) noexcept {
+    [[nodiscard]] Vector3f MapToRGB(const UInt mesh_index) const noexcept {
         const auto hue = static_cast<Float>(mesh_index) * 0.6180339887498948f;
         const Float h = (hue - std::floor(hue)) * 6.0f;
         const Float x = 1.0f - std::abs(std::fmod(h, 2.0f) - 1.0f);

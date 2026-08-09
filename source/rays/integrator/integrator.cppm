@@ -73,6 +73,10 @@ class SamplingIntegrator : public Integrator<T> {
     /// Render single `Tile` of `Film`.
     virtual void RenderTile(Tile<T> &tile, Film<T> &film) = 0;
 
+    /// Sample ray and return color.
+    [[nodiscard]] virtual Vector3f
+    Sample(const Ray3f &ray, const Vector3f &background) const noexcept = 0;
+
     /// Camera position during render.
     Vector3f position_{};
     /// Camera rotation during render.
