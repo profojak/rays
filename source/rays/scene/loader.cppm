@@ -94,7 +94,8 @@ export class CRTLoader : public Loader {
                 for (std::size_t i = 0; i < 9; ++i) {
                     rotation_matrix[i] = matrix[i].GetFloat();
                 }
-                scene->GetCamera().SetRotation(Matrix3f{rotation_matrix});
+                scene->GetCamera().SetRotation(
+                    Matrix3f{rotation_matrix}.Transposed());
             }
 
             // Camera position.
