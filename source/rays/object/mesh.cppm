@@ -16,6 +16,8 @@ namespace rays {
 /// Mesh.
 export struct Mesh {
 
+    /// Material index.
+    Int material_index{-1};
     /// Vertices.
     std::vector<Vector3f> vertices;
     /// Triangles.

@@ -9,6 +9,7 @@ export module rays:scene;
 
 import :camera;
 import :light;
+import :material;
 import :mesh;
 import :thread;
 import :type;
@@ -32,6 +33,11 @@ export class Scene {
         lights_.push_back(std::make_unique<L>(light));
     }
 
+    /// Add `Material` to scene.
+    void AddMaterial(const Material &&material) {
+        materials_.push_back(std::move(material));
+    }
+
     /// Render scene to film.
     void Render(ThreadPool &thread_pool) {
         camera_.Render(thread_pool, meshes_, lights_);
@@ -49,6 +55,8 @@ export class Scene {
     std::vector<Mesh> meshes_;
     /// Lights.
     std::vector<std::unique_ptr<Light>> lights_;
+    /// Materials.
+    std::vector<Material> materials_;
 };
 
 } // namespace rays

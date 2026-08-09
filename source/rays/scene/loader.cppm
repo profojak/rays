@@ -13,6 +13,7 @@ export module rays:loader;
 
 import :camera;
 import :light;
+import :material;
 import :mesh;
 import :scene;
 import :triangle;
@@ -136,6 +137,57 @@ export class CRTLoader : public Loader {
             }
         }
 
+        // Materials.
+        if (const auto &materials = document["materials"];
+            materials.IsArray()) {
+            for (const auto &material : materials.GetArray()) {
+                if (!material.IsObject()) {
+                    continue;
+                }
+
+                Material::Type type;
+                Vector3f albedo;
+                bool smooth_shading;
+
+                // Type.
+                if (const auto &type_value = material["type"];
+                    type_value.IsString()) {
+                    const std::string type_str = type_value.GetString();
+                    if (type_str == "diffuse") {
+                        type = Material::Type::Diffuse;
+                    } else if (type_str == "reflective") {
+                        type = Material::Type::Reflective;
+                    } else {
+                        std::unreachable();
+                    }
+                } else {
+                    std::unreachable();
+                }
+
+                // Albedo.
+                if (const auto &albedo_value = material["albedo"];
+                    albedo_value.IsArray() && albedo_value.Size() == 3) {
+                    albedo = {albedo_value[0].GetFloat(),
+                              albedo_value[1].GetFloat(),
+                              albedo_value[2].GetFloat()};
+                } else {
+                    std::unreachable();
+                }
+
+                // Smooth shading.
+                if (const auto &smooth_shading_value =
+                        material["smooth_shading"];
+                    smooth_shading_value.IsBool()) {
+                    smooth_shading = smooth_shading_value.GetBool();
+                } else {
+                    std::unreachable();
+                }
+
+                scene->AddMaterial(
+                    std::move(Material{type, albedo, smooth_shading}));
+            }
+        }
+
         // Objects.
         if (const auto &objects = document["objects"]; objects.IsArray()) {
             for (const auto &object : objects.GetArray()) {
@@ -144,6 +196,12 @@ export class CRTLoader : public Loader {
                 }
 
                 Mesh mesh;
+
+                // Material index.
+                if (const auto &material_index = object["material_index"];
+                    material_index.IsInt()) {
+                    mesh.material_index = material_index.GetInt();
+                }
 
                 // Vertices.
                 if (const auto &vertices = object["vertices"];

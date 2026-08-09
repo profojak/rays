@@ -23,6 +23,7 @@ target_sources(rays
             math/vector.cppm
 
             object/light.cppm
+            object/material.cppm
             object/mesh.cppm
             object/sphere.cppm
             object/triangle.cppm
