@@ -3,6 +3,7 @@ module;
 #include "math/math.hpp" // IWYU pragma: keep
 
 #include <array>
+#include <cmath>
 #include <concepts>
 #include <optional>
 
@@ -86,7 +87,7 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
     /// Find closest intersection along ray across all meshes.
     [[nodiscard]] std::optional<Pixel<T>>
     Intersect(const Ray3f &ray) const noexcept {
-        std::optional<TriangleIntersection3f> closest;
+        std::optional<TriangleIntersection3f> closest_intersection;
         std::array<Vector3f, 3> closest_vertices;
         UInt closest_mesh = 0;
 
@@ -98,8 +99,9 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
                     ray, vertices[triangle.a], vertices[triangle.b],
                     vertices[triangle.c]);
                 if (intersection &&
-                    (!closest || intersection->t < closest->t)) {
-                    closest = intersection;
+                    (!closest_intersection ||
+                     intersection->t < closest_intersection->t)) {
+                    closest_intersection = intersection;
                     closest_vertices = {vertices[triangle.a],
                                         vertices[triangle.b],
                                         vertices[triangle.c]};
@@ -107,7 +109,7 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
                 }
             }
         }
-        if (!closest) {
+        if (!closest_intersection) {
             return std::nullopt;
         }
 
@@ -123,12 +125,31 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
         Vector3f normal = Vector3f::Cross(edge1, edge2);
         normal.Normalize();
 
-        if (linalg::dot(normal.View(), ray.direction.View()) > Float{0}) {
+        if (linalg::dot(normal.View(), ray.direction.View()) > 0.0f) {
             normal = -normal;
         }
-        const auto facing = -linalg::dot(normal.View(), ray.direction.View());
-        const auto shade = static_cast<T>(facing);
-        return Pixel<T>{shade, shade, shade};
+        const Float shade = -linalg::dot(normal.View(), ray.direction.View());
+        const auto [r, g, b] = MapToRGB(mesh_index);
+        return Pixel<T>{r * shade, g * shade, b * shade};
+    }
+
+    /// Map mesh index to RGB color.
+    [[nodiscard]] static std::array<Float, 3>
+    MapToRGB(const UInt mesh_index) noexcept {
+        const auto hue = static_cast<Float>(mesh_index) * 0.6180339887498948f;
+        const Float h = (hue - std::floor(hue)) * 6.0f;
+        const Float x = 1.0f - std::abs(std::fmod(h, 2.0f) - 1.0f);
+        if (h < 1.0f)
+            return {1.0f, x, 0.0f};
+        if (h < 2.0f)
+            return {x, 1.0f, 0.0f};
+        if (h < 3.0f)
+            return {0.0f, 1.0f, x};
+        if (h < 4.0f)
+            return {0.0f, x, 1.0f};
+        if (h < 5.0f)
+            return {x, 0.0f, 1.0f};
+        return {1.0f, 0.0f, x};
     }
 };
 
