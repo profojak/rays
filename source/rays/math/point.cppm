@@ -67,6 +67,12 @@ export template <arithmetic T, std::size_t N> struct Point {
         return result;
     }
 
+    /// Subtract vector from point.
+    [[nodiscard]] constexpr auto
+    operator-(const Vector<T, N> &other) const noexcept {
+        return *this + (-other);
+    }
+
     /// Multiply point by scalar.
     [[nodiscard]] constexpr auto operator*(T scalar) const noexcept {
         Point result{*this};
@@ -77,5 +83,6 @@ export template <arithmetic T, std::size_t N> struct Point {
 
 export using Point2i = Point<Int, 2>;
 export using Point2u = Point<UInt, 2>;
+export using Point3f = Point<Float, 3>;
 
 } // namespace rays

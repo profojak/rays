@@ -2,8 +2,8 @@ module;
 
 export module rays:light;
 
+import :point;
 import :type;
-import :vector;
 
 namespace rays {
 
@@ -11,26 +11,26 @@ namespace rays {
 export class Light {
 
   public:
-    Light(Float intensity, Vector3f position)
+    Light(Float intensity, Point3f position)
         : intensity_{intensity}, position_{position} {}
 
     /// Return light intensity.
     virtual Float Intensity() const { return intensity_; }
     /// Return light position.
-    virtual Vector3f Position() const { return position_; }
+    virtual Point3f Position() const { return position_; }
 
   private:
     /// Light intensity.
     Float intensity_;
     /// Light position.
-    Vector3f position_;
+    Point3f position_;
 };
 
 /// Point light.
 export class PointLight : public Light {
 
   public:
-    PointLight(Float intensity, Vector3f position)
+    PointLight(Float intensity, Point3f position)
         : Light{intensity, position} {}
 };
 

@@ -15,8 +15,9 @@ import :type;
 
 namespace rays {
 
-/// Forward declaration of `Pixel`.
+/// Forward declarations.
 export template <std::floating_point T> class Pixel;
+export template <arithmetic T, std::size_t N> struct Point;
 
 /// Linear algebra vector.
 export template <arithmetic T, std::size_t N> struct Vector {
@@ -35,6 +36,10 @@ export template <arithmetic T, std::size_t N> struct Vector {
     template <std::floating_point U>
         requires(N == 3 && std::same_as<U, T>)
     Vector(const Pixel<U> &p) : data{p.rgb} {}
+
+    Vector(const Point<T, N> &p) {
+        std::copy(p.data.begin(), p.data.end(), data.begin());
+    }
 
     /// Return `mdspan` view of vector data.
     template <typename Self>
