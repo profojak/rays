@@ -16,6 +16,11 @@ export class Random {
         return std::uniform_real_distribution<Float>{0.0f, 1.0f}(engine_);
     }
 
+    /// Return uniform random `UInt` in [0, `range`).
+    [[nodiscard]] static UInt Range(const UInt range) noexcept {
+        return std::uniform_int_distribution<UInt>{0, range - 1}(engine_);
+    }
+
   private:
     /// Random engine, one per thread.
     static inline thread_local std::mt19937 engine_{std::random_device{}()};

@@ -6,7 +6,6 @@ module;
 #include <array>
 #include <cassert>
 #include <concepts>
-#include <initializer_list>
 #include <type_traits>
 #include <utility>
 
@@ -27,10 +26,12 @@ export template <arithmetic T, std::size_t N> struct Vector {
 
     Vector() = default;
     Vector(const Vector &other) = default;
-    Vector(std::initializer_list<T> init) {
-        assert(init.size() <= N);
-        std::copy(init.begin(), init.end(), data.begin());
-    }
+    Vector(T value) { std::fill(data.begin(), data.end(), value); }
+
+    template <typename... Ts>
+        requires(sizeof...(Ts) == N && (std::convertible_to<Ts, T> && ...))
+    Vector(Ts... values) : data{static_cast<T>(values)...} {}
+
     template <std::floating_point U>
         requires(N == 3 && std::same_as<U, T>)
     Vector(const Pixel<U> &p) : data{p.rgb} {}
