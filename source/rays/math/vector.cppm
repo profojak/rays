@@ -2,8 +2,11 @@ module;
 
 #include "math.hpp" // IWYU pragma: keep
 
+#include <algorithm>
 #include <array>
 #include <cassert>
+#include <concepts>
+#include <initializer_list>
 #include <type_traits>
 #include <utility>
 
@@ -13,11 +16,24 @@ import :type;
 
 namespace rays {
 
+/// Forward declaration of `Pixel`.
+export template <std::floating_point T> class Pixel;
+
 /// Linear algebra vector.
 export template <arithmetic T, std::size_t N> struct Vector {
 
     /// Vector data.
     std::array<T, N> data{};
+
+    Vector() = default;
+    Vector(const Vector &other) = default;
+    Vector(std::initializer_list<T> init) {
+        assert(init.size() <= N);
+        std::copy(init.begin(), init.end(), data.begin());
+    }
+    template <std::floating_point U>
+        requires(N == 3 && std::same_as<U, T>)
+    Vector(const Pixel<U> &p) : data{p.rgb} {}
 
     /// Return `mdspan` view of vector data.
     template <typename Self>
