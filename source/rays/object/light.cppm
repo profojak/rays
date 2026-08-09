@@ -3,6 +3,7 @@ module;
 export module rays:light;
 
 import :point;
+import :sphere;
 import :type;
 
 namespace rays {
@@ -31,7 +32,14 @@ export class PointLight : public Light {
 
   public:
     PointLight(Float intensity, Point3f position)
-        : Light{intensity, position} {}
+        : Light{intensity, position}, sphere_{position, 1.0f} {}
+
+    /// Return light sphere for visualization.
+    Sphere &GetSphere() { return sphere_; }
+
+  private:
+    /// Sphere representing light source for visualization.
+    Sphere sphere_;
 };
 
 } // namespace rays

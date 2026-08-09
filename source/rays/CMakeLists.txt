@@ -24,6 +24,7 @@ target_sources(rays
 
             object/light.cppm
             object/mesh.cppm
+            object/sphere.cppm
             object/triangle.cppm
 
             render/ray.cppm

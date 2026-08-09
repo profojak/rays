@@ -9,8 +9,9 @@ import :vector;
 
 namespace rays {
 
-/// Forward declaration of `Triangle`.
+/// Forward declarations.
 export struct Triangle;
+export struct Sphere;
 
 /// Ray.
 export template <std::floating_point T> struct Ray {
@@ -40,7 +41,17 @@ export template <std::floating_point T> struct Intersection<T, Triangle> {
     UInt triangle_index{0};
 };
 
+/// Sphere intersection specialization.
+export template <std::floating_point T> struct Intersection<T, Sphere> {
+
+    Intersection(Float t) : t{t} {}
+
+    /// Distance along ray to intersection point.
+    Float t;
+};
+
 export using Ray3f = Ray<Float>;
 export using TriangleIntersection3f = Intersection<Float, Triangle>;
+export using SphereIntersection3f = Intersection<Float, Sphere>;
 
 } // namespace rays
