@@ -165,7 +165,7 @@ void RenderImGUI() {
     ImGui::SameLine();
     ImGui::BeginDisabled(!rays_state.is_rendered || rays_state.is_rendering);
     if (ImGui::Button("Save .ppm")) {
-        Rays_Camera_SaveImage(std::filesystem::current_path().string().c_str());
+        Rays_SaveImage(std::filesystem::current_path().string().c_str());
     }
     ImGui::EndDisabled();
     ImGui::End();
@@ -192,8 +192,7 @@ void FetchImageData() {
     int pitch;
     if (SDL_LockTexture(sdl_state.texture, nullptr, &image, &pitch)) {
         uint8_t *dst = static_cast<uint8_t *>(image);
-        uint8_t const *src =
-            static_cast<uint8_t const *>(Rays_Camera_ImageData());
+        uint8_t const *src = static_cast<uint8_t const *>(Rays_ImageData());
         for (int y = 0; y < sdl_state.height; ++y) {
             memcpy(dst + y * pitch, src + y * sdl_state.width * 4,
                    sdl_state.width * 4);
@@ -234,8 +233,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    Rays_Scene_Load(argv[1], Rays_Scene_Type_CRT);
-    Rays_Camera_GetResolution(&sdl_state.width, &sdl_state.height);
+    Rays_LoadScene(argv[1], Rays_Scene_Type_CRT);
+    Rays_GetResolution(&sdl_state.width, &sdl_state.height);
 
     if (InitializeSDL()) {
         return 1;
@@ -260,24 +259,24 @@ int main(int argc, char **argv) {
         ProcessInput();
 
         if (!rays_state.is_rendering &&
-            (Rays_Camera_Move(input.move_input) |
-             Rays_Camera_Rotate(input.rotate_input))) {
+            (Rays_MoveCamera(input.move_input) |
+             Rays_RotateCamera(input.rotate_input))) {
             rays_state.is_rendered = false;
             Uint64 const elapsed = SDL_GetTicks() - frame_start;
             Uint64 const remaining = elapsed < target_frame_time_ms
                                          ? target_frame_time_ms - elapsed
                                          : Uint64{0};
-            Rays_Camera_Preview(remaining);
+            Rays_Preview(remaining);
             FetchImageData();
         }
 
         if (rays_state.to_render) {
-            Rays_Camera_Render();
+            Rays_Render();
             rays_state.to_render = false;
             rays_state.is_rendering = true;
         } else if (rays_state.is_rendering) {
             FetchImageData();
-            if (!Rays_Camera_IsRendering()) {
+            if (!Rays_IsRendering()) {
                 rays_state.is_rendering = false;
                 rays_state.is_rendered = true;
             }

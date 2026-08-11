@@ -21,23 +21,23 @@ struct Rays_Camera_RotateInput {
 /// Greet folks from Chaos!
 void Rays_Greet();
 /// Load scene from file.
-void Rays_Scene_Load(const char *path, Rays_Scene_Type type);
+void Rays_LoadScene(const char *path, Rays_Scene_Type type);
 /// Move camera relative to view direction.
-bool Rays_Camera_Move(const Rays_Camera_MoveInput &input);
+bool Rays_MoveCamera(const Rays_Camera_MoveInput &input);
 /// Rotate camera based on yaw and pitch deltas in radians.
-bool Rays_Camera_Rotate(const Rays_Camera_RotateInput &input);
+bool Rays_RotateCamera(const Rays_Camera_RotateInput &input);
 /// Get camera resolution.
-void Rays_Camera_GetResolution(unsigned int *width, unsigned int *height);
+void Rays_GetResolution(unsigned int *width, unsigned int *height);
 /// Get pointer to image data.
-const void *Rays_Camera_ImageData();
+const void *Rays_ImageData();
 /// Render scene to film.
-void Rays_Camera_Render();
+void Rays_Render();
 /// Check if camera render is in progress.
-bool Rays_Camera_IsRendering();
+bool Rays_IsRendering();
 /// Block until camera render finishes.
-void Rays_Camera_WaitForRender();
+void Rays_WaitForRender();
 /// Preview scene with fast rendering.
-void Rays_Camera_Preview(unsigned long long time_budget);
+void Rays_Preview(unsigned long long time_budget);
 /// Save camera image to `output.ppm` in given working directory.
-void Rays_Camera_SaveImage(const char *working_directory);
+void Rays_SaveImage(const char *working_directory);
 }

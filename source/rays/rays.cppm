@@ -24,7 +24,7 @@ export namespace rays {
 void Greet() { std::println("Hello, Chaos!"); }
 
 /// Load scene from file.
-void Scene_Load(const std::string &path, Loader::Type type) {
+void LoadScene(const std::string &path, Loader::Type type) {
     switch (type) {
     case Loader::Type::CRT:
         State::scene = CRTLoader::Load(path);
@@ -33,7 +33,7 @@ void Scene_Load(const std::string &path, Loader::Type type) {
 }
 
 /// Move camera relative to view direction.
-bool Camera_Move(const Rays_Camera_MoveInput &input) {
+bool MoveCamera(const Rays_Camera_MoveInput &input) {
     auto &camera = State::scene->GetCamera();
     auto position = camera.GetPosition();
     const Matrix3f rotation = camera.GetRotation();
@@ -74,7 +74,7 @@ bool Camera_Move(const Rays_Camera_MoveInput &input) {
 }
 
 /// Rotate camera based on yaw and pitch deltas in radians.
-bool Camera_Rotate(const Rays_Camera_RotateInput &input) {
+bool RotateCamera(const Rays_Camera_RotateInput &input) {
     if (input.yaw == 0.0f && input.pitch == 0.0f) {
         return false;
     }
@@ -99,31 +99,31 @@ bool Camera_Rotate(const Rays_Camera_RotateInput &input) {
 }
 
 /// Get camera resolution.
-Vector2u Camera_GetResolution() {
+Vector2u GetResolution() {
     return State::scene->GetCamera().GetFilm().GetResolution();
 }
 
 /// Return pointer to image data.
-const void *Camera_ImageData() {
+const void *ImageData() {
     return State::scene->GetCamera().GetFilm().ImageData();
 }
 
 /// Render scene to film.
-void Camera_Render() { State::scene->Render(State::thread_pool); }
+void Render() { State::scene->Render(State::thread_pool); }
 
 /// Check if camera render is in progress.
-bool Camera_IsRendering() { return State::scene->GetCamera().IsRendering(); }
+bool IsRendering() { return State::scene->GetCamera().IsRendering(); }
 
 /// Block until camera render finishes.
-void Camera_WaitForRender() { State::scene->GetCamera().WaitForRender(); }
+void WaitForRender() { State::scene->GetCamera().WaitForRender(); }
 
 /// Preview scene with fast rendering.
-void Camera_Preview(unsigned long long time_budget) {
+void Preview(unsigned long long time_budget) {
     State::scene->Preview(State::thread_pool, time_budget);
 }
 
 /// Save camera image to `output.ppm` in given working directory.
-void Camera_SaveImage(const std::string &working_directory) {
+void SaveImage(const std::string &working_directory) {
     if (working_directory.empty()) {
         std::println(std::cerr,
                      "Failed to save image: empty working directory!");
@@ -160,37 +160,37 @@ void Camera_SaveImage(const std::string &working_directory) {
 extern "C" { // C API
 void Rays_Greet() { rays::Greet(); }
 
-void Rays_Scene_Load(const char *path, Rays_Scene_Type type) {
-    rays::Scene_Load(path, static_cast<rays::Loader::Type>(type));
+void Rays_LoadScene(const char *path, Rays_Scene_Type type) {
+    rays::LoadScene(path, static_cast<rays::Loader::Type>(type));
 }
 
-bool Rays_Camera_Move(const Rays_Camera_MoveInput &input) {
-    return rays::Camera_Move(input);
+bool Rays_MoveCamera(const Rays_Camera_MoveInput &input) {
+    return rays::MoveCamera(input);
 }
 
-bool Rays_Camera_Rotate(const Rays_Camera_RotateInput &input) {
-    return rays::Camera_Rotate(input);
+bool Rays_RotateCamera(const Rays_Camera_RotateInput &input) {
+    return rays::RotateCamera(input);
 }
 
-void Rays_Camera_GetResolution(unsigned int *width, unsigned int *height) {
-    auto res = rays::Camera_GetResolution();
+void Rays_GetResolution(unsigned int *width, unsigned int *height) {
+    auto res = rays::GetResolution();
     *width = res[0];
     *height = res[1];
 }
 
-const void *Rays_Camera_ImageData() { return rays::Camera_ImageData(); }
+const void *Rays_ImageData() { return rays::ImageData(); }
 
-void Rays_Camera_Render() { rays::Camera_Render(); }
+void Rays_Render() { rays::Render(); }
 
-bool Rays_Camera_IsRendering() { return rays::Camera_IsRendering(); }
+bool Rays_IsRendering() { return rays::IsRendering(); }
 
-void Rays_Camera_WaitForRender() { rays::Camera_WaitForRender(); }
+void Rays_WaitForRender() { rays::WaitForRender(); }
 
-void Rays_Camera_Preview(unsigned long long time_budget) {
-    rays::Camera_Preview(time_budget);
+void Rays_Preview(unsigned long long time_budget) {
+    rays::Preview(time_budget);
 }
 
-void Rays_Camera_SaveImage(const char *working_directory) {
-    rays::Camera_SaveImage(working_directory ? working_directory : "");
+void Rays_SaveImage(const char *working_directory) {
+    rays::SaveImage(working_directory ? working_directory : "");
 }
 }
