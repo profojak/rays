@@ -45,7 +45,7 @@ target_sources(rays
         TYPE HEADERS
         BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         FILES
-            rays.hpp
+            rays.h
             math/math.hpp
 )
 

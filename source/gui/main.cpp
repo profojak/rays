@@ -1,3 +1,5 @@
+#include <filesystem>
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_pixels.h>
@@ -27,14 +29,20 @@ struct SDL_State {
     inline static float scale_x = 1.0f;
     /// Pixels per window height.
     inline static float scale_y = 1.0f;
-} state;
+} sdl_state;
 
-/// Per-frame input state.
-struct Input {
+/// Global state of renderer.
+struct Rays_State {
     /// Whether to render.
     bool to_render = false;
     /// Whether camera is currently rendering.
     bool is_rendering = false;
+    /// Whether render is completed.
+    bool is_rendered = false;
+} rays_state;
+
+/// Per-frame input state.
+struct Input {
     /// Camera move input.
     Rays_Camera_MoveInput move_input;
     /// Camera rotate input.
@@ -55,14 +63,14 @@ constexpr static float rotation_sensitivity = 0.003f;
 
 /// Shutdown SDL.
 void ShutdownSDL() {
-    if (state.texture) {
-        SDL_DestroyTexture(state.texture);
+    if (sdl_state.texture) {
+        SDL_DestroyTexture(sdl_state.texture);
     }
-    if (state.renderer) {
-        SDL_DestroyRenderer(state.renderer);
+    if (sdl_state.renderer) {
+        SDL_DestroyRenderer(sdl_state.renderer);
     }
-    if (state.window) {
-        SDL_DestroyWindow(state.window);
+    if (sdl_state.window) {
+        SDL_DestroyWindow(sdl_state.window);
     }
     SDL_Quit();
 }
@@ -81,38 +89,41 @@ int InitializeSDL() {
         return 1;
     }
 
-    state.window = SDL_CreateWindow("Rays", state.width, state.height,
-                                    SDL_WINDOW_HIGH_PIXEL_DENSITY);
-    if (!state.window) {
+    sdl_state.window =
+        SDL_CreateWindow("Rays", sdl_state.width, sdl_state.height,
+                         SDL_WINDOW_HIGH_PIXEL_DENSITY);
+    if (!sdl_state.window) {
         SDL_Log("SDL_CreateWindow failed: %s", SDL_GetError());
         ShutdownSDL();
         return 1;
     }
 
-    state.renderer = SDL_CreateRenderer(state.window, nullptr);
-    if (!state.renderer) {
+    sdl_state.renderer = SDL_CreateRenderer(sdl_state.window, nullptr);
+    if (!sdl_state.renderer) {
         SDL_Log("SDL_CreateRenderer failed: %s", SDL_GetError());
         ShutdownSDL();
         return 1;
     }
 
     int window_h, window_w, pixel_w, pixel_h;
-    SDL_GetWindowSize(state.window, &window_w, &window_h);
-    SDL_GetWindowSizeInPixels(state.window, &pixel_w, &pixel_h);
+    SDL_GetWindowSize(sdl_state.window, &window_w, &window_h);
+    SDL_GetWindowSizeInPixels(sdl_state.window, &pixel_w, &pixel_h);
     if (window_w > 0 && window_h > 0) {
-        state.scale_x = (float)pixel_w / window_w;
-        state.scale_y = (float)pixel_h / window_h;
-        SDL_SetRenderScale(state.renderer, state.scale_x, state.scale_y);
+        sdl_state.scale_x = (float)pixel_w / window_w;
+        sdl_state.scale_y = (float)pixel_h / window_h;
+        SDL_SetRenderScale(sdl_state.renderer, sdl_state.scale_x,
+                           sdl_state.scale_y);
     }
 
-    SDL_SetWindowSize(state.window,
-                      (int)SDL_ceilf((float)state.width / state.scale_x),
-                      (int)SDL_ceilf((float)state.height / state.scale_y));
+    SDL_SetWindowSize(
+        sdl_state.window,
+        (int)SDL_ceilf((float)sdl_state.width / sdl_state.scale_x),
+        (int)SDL_ceilf((float)sdl_state.height / sdl_state.scale_y));
 
-    state.texture = SDL_CreateTexture(state.renderer, SDL_PIXELFORMAT_RGBA32,
-                                      SDL_TEXTUREACCESS_STREAMING, state.width,
-                                      state.height);
-    if (!state.texture) {
+    sdl_state.texture = SDL_CreateTexture(
+        sdl_state.renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
+        sdl_state.width, sdl_state.height);
+    if (!sdl_state.texture) {
         SDL_Log("SDL_CreateTexture failed: %s", SDL_GetError());
         ShutdownSDL();
         return 1;
@@ -126,8 +137,8 @@ int InitializeImGUI() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::GetIO().IniFilename = nullptr;
-    ImGui_ImplSDL3_InitForSDLRenderer(state.window, state.renderer);
-    ImGui_ImplSDLRenderer3_Init(state.renderer);
+    ImGui_ImplSDL3_InitForSDLRenderer(sdl_state.window, sdl_state.renderer);
+    ImGui_ImplSDLRenderer3_Init(sdl_state.renderer);
     return 0;
 }
 
@@ -146,13 +157,17 @@ void RenderImGUI() {
         input.move_input.backward ? 'S' : '-',
         input.move_input.right ? 'D' : '-', input.move_input.down ? 'Q' : '-',
         input.move_input.up ? 'E' : '-');
-    if (input.is_rendering) {
-        ImGui::Text("Rendering...");
-    } else {
-        if (ImGui::Button("Render")) {
-            input.to_render = true;
-        }
+    ImGui::BeginDisabled(rays_state.is_rendering);
+    if (ImGui::Button(rays_state.is_rendering ? "Rendering" : "Render")) {
+        rays_state.to_render = true;
     }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::BeginDisabled(!rays_state.is_rendered || rays_state.is_rendering);
+    if (ImGui::Button("Save .ppm")) {
+        Rays_Camera_SaveImage(std::filesystem::current_path().string().c_str());
+    }
+    ImGui::EndDisabled();
     ImGui::End();
 
     ImGui::Render();
@@ -160,26 +175,30 @@ void RenderImGUI() {
 
 /// Present one frame.
 void RenderFrame() {
-    SDL_RenderClear(state.renderer);
-    SDL_FRect const viewport = {0, 0, (float)state.width / state.scale_x,
-                                (float)state.height / state.scale_y};
-    SDL_RenderTexture(state.renderer, state.texture, nullptr, &viewport);
-    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), state.renderer);
-    SDL_RenderPresent(state.renderer);
+    SDL_RenderClear(sdl_state.renderer);
+    SDL_FRect const viewport = {0, 0,
+                                (float)sdl_state.width / sdl_state.scale_x,
+                                (float)sdl_state.height / sdl_state.scale_y};
+    SDL_RenderTexture(sdl_state.renderer, sdl_state.texture, nullptr,
+                      &viewport);
+    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(),
+                                          sdl_state.renderer);
+    SDL_RenderPresent(sdl_state.renderer);
 }
 
 /// Fetch image data from camera.
 void FetchImageData() {
     void *image;
     int pitch;
-    if (SDL_LockTexture(state.texture, nullptr, &image, &pitch)) {
+    if (SDL_LockTexture(sdl_state.texture, nullptr, &image, &pitch)) {
         uint8_t *dst = static_cast<uint8_t *>(image);
         uint8_t const *src =
             static_cast<uint8_t const *>(Rays_Camera_ImageData());
-        for (int y = 0; y < state.height; ++y) {
-            memcpy(dst + y * pitch, src + y * state.width * 4, state.width * 4);
+        for (int y = 0; y < sdl_state.height; ++y) {
+            memcpy(dst + y * pitch, src + y * sdl_state.width * 4,
+                   sdl_state.width * 4);
         }
-        SDL_UnlockTexture(state.texture);
+        SDL_UnlockTexture(sdl_state.texture);
     }
 }
 
@@ -216,7 +235,7 @@ int main(int argc, char **argv) {
     }
 
     Rays_Scene_Load(argv[1], Rays_Scene_Type_CRT);
-    Rays_Camera_GetResolution(&state.width, &state.height);
+    Rays_Camera_GetResolution(&sdl_state.width, &sdl_state.height);
 
     if (InitializeSDL()) {
         return 1;
@@ -240,8 +259,10 @@ int main(int argc, char **argv) {
 
         ProcessInput();
 
-        if (!input.is_rendering && (Rays_Camera_Move(input.move_input) |
-                                    Rays_Camera_Rotate(input.rotate_input))) {
+        if (!rays_state.is_rendering &&
+            (Rays_Camera_Move(input.move_input) |
+             Rays_Camera_Rotate(input.rotate_input))) {
+            rays_state.is_rendered = false;
             Uint64 const elapsed = SDL_GetTicks() - frame_start;
             Uint64 const remaining = elapsed < target_frame_time_ms
                                          ? target_frame_time_ms - elapsed
@@ -250,14 +271,15 @@ int main(int argc, char **argv) {
             FetchImageData();
         }
 
-        if (input.to_render) {
+        if (rays_state.to_render) {
             Rays_Camera_Render();
-            input.to_render = false;
-            input.is_rendering = true;
-        } else if (input.is_rendering) {
+            rays_state.to_render = false;
+            rays_state.is_rendering = true;
+        } else if (rays_state.is_rendering) {
             FetchImageData();
             if (!Rays_Camera_IsRendering()) {
-                input.is_rendering = false;
+                rays_state.is_rendering = false;
+                rays_state.is_rendered = true;
             }
         }
 

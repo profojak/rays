@@ -1,6 +1,9 @@
 module;
 
 #include <cmath>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <memory>
 #include <print>
 #include <string>
@@ -119,6 +122,39 @@ void Camera_Preview(unsigned long long time_budget) {
     State::scene->Preview(State::thread_pool, time_budget);
 }
 
+/// Save camera image to `output.ppm` in given working directory.
+void Camera_SaveImage(const std::string &working_directory) {
+    if (working_directory.empty()) {
+        std::println(std::cerr,
+                     "Failed to save image: empty working directory!");
+        return;
+    }
+
+    const auto &film = State::scene->GetCamera().GetFilm();
+    const Vector2u resolution = film.GetResolution();
+    const auto *image = static_cast<const UChar *>(film.ImageData());
+
+    const std::filesystem::path path =
+        std::filesystem::path(working_directory) / "output.ppm";
+    std::ofstream file{path, std::ios::binary};
+    if (!file) {
+        std::println(std::cerr, "Failed to open output file: {}!",
+                     path.string());
+        return;
+    }
+
+    file << "P6\n" << resolution[0] << ' ' << resolution[1] << "\n255\n";
+    for (UInt y = 0; y < resolution[1]; ++y) {
+        for (UInt x = 0; x < resolution[0]; ++x) {
+            const auto *pixel = image + (y * resolution[0] + x) * 4;
+            file.put(static_cast<char>(pixel[0]));
+            file.put(static_cast<char>(pixel[1]));
+            file.put(static_cast<char>(pixel[2]));
+        }
+    }
+    std::println("Saved image to {}", path.string());
+}
+
 } // namespace rays
 
 extern "C" { // C API
@@ -152,5 +188,9 @@ void Rays_Camera_WaitForRender() { rays::Camera_WaitForRender(); }
 
 void Rays_Camera_Preview(unsigned long long time_budget) {
     rays::Camera_Preview(time_budget);
+}
+
+void Rays_Camera_SaveImage(const char *working_directory) {
+    rays::Camera_SaveImage(working_directory ? working_directory : "");
 }
 }

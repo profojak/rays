@@ -38,4 +38,6 @@ bool Rays_Camera_IsRendering();
 void Rays_Camera_WaitForRender();
 /// Preview scene with fast rendering.
 void Rays_Camera_Preview(unsigned long long time_budget);
+/// Save camera image to `output.ppm` in given working directory.
+void Rays_Camera_SaveImage(const char *working_directory);
 }
