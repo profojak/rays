@@ -9,6 +9,7 @@ add_executable(tests
 
     object/triangle.cpp
 
+    render/integrator.cpp
     render/ray.cpp
     render/scheduler.cpp
     render/tile.cpp
