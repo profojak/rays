@@ -117,6 +117,15 @@ export template <arithmetic T, std::size_t N> struct Vector {
         return result;
     }
 
+    /// Multiply vector by vector, element-wise.
+    [[nodiscard]] constexpr auto operator*(const Vector &other) const noexcept {
+        Vector result{*this};
+        for (std::size_t i = 0; i < N; ++i) {
+            result.data[i] *= other.data[i];
+        }
+        return result;
+    }
+
     /// Divide vector by scalar.
     [[nodiscard]] constexpr auto operator/(T scalar) const noexcept {
         assert(scalar != 0);

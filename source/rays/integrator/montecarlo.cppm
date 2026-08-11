@@ -11,6 +11,7 @@ export module rays:montecarlo;
 
 import :film;
 import :integrator;
+import :material;
 import :mesh;
 import :matrix;
 import :pixel;
@@ -30,6 +31,8 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
   private:
     /// Number of samples per pixel.
     UInt samples_per_pixel_ = 4;
+    /// Maximum number of reflection bounces.
+    UInt max_bounces_ = 4;
 
   public:
     MonteCarloIntegrator(const Vector2u &film_size_)
@@ -59,6 +62,12 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
     [[nodiscard]] Vector3f
     Sample(const Ray3f &ray,
            const Vector3f &background) const noexcept override {
+        return Sample(ray, background, 0);
+    }
+
+    /// Sample ray at given bounce depth and return color.
+    [[nodiscard]] Vector3f Sample(const Ray3f &ray, const Vector3f &background,
+                                  const UInt depth) const noexcept {
         const auto intersection = Intersect(ray, background);
         if (!intersection) {
             return background;
@@ -71,19 +80,55 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
         const auto &v1 = mesh.vertices[triangle.b];
         const auto &v2 = mesh.vertices[triangle.c];
 
+        // Albedo.
         const Vector3f albedo = mesh.material_index < 0
                                     ? Vector3f{1.0f}
                                     : materials[mesh.material_index].albedo;
 
-        Vector3f color{0.0f};
-        if (!this->lights_->empty()) {
-            const Vector3f edge1 = v1 - v0;
-            const Vector3f edge2 = v2 - v0;
-            const Vector3f hit = v0 + edge1 * (*intersection).uv[0] +
-                                 edge2 * (*intersection).uv[1];
-            Vector3f normal = mesh.face_normals[(*intersection).triangle_index];
-            normal.Normalize();
+        // Normal.
+        Vector3f normal;
+        if (mesh.material_index < 0 ||
+            !materials[mesh.material_index].smooth_shading) {
+            normal = mesh.face_normals[(*intersection).triangle_index];
+        } else {
+            const auto u = (*intersection).uv[0];
+            const auto v = (*intersection).uv[1];
+            normal = mesh.vertex_normals[triangle.a] * (1.0f - u - v) +
+                     mesh.vertex_normals[triangle.b] * u +
+                     mesh.vertex_normals[triangle.c] * v;
+        }
+        normal.Normalize();
 
+        const Vector3f edge1 = v1 - v0;
+        const Vector3f edge2 = v2 - v0;
+        const Vector3f hit =
+            v0 + edge1 * (*intersection).uv[0] + edge2 * (*intersection).uv[1];
+
+        // Reflective material.
+        if (mesh.material_index >= 0 &&
+            materials[mesh.material_index].type == Material::Type::Reflective) {
+            if (depth >= max_bounces_) {
+                return background;
+            }
+
+            Vector3f reflection_normal = normal;
+            if (linalg::dot(reflection_normal.View(), ray.direction.View()) >
+                0.0f) {
+                reflection_normal = -reflection_normal;
+            }
+            const Vector3f reflection =
+                ray.direction -
+                reflection_normal *
+                    (2.0f * linalg::dot(ray.direction.View(),
+                                        reflection_normal.View()));
+
+            const Vector3f reflected_color =
+                Sample(Ray3f{hit + reflection_normal * Epsilon, reflection},
+                       background, depth + 1);
+            return albedo * reflected_color;
+        }
+
+        if (!this->lights_->empty()) {
             const auto &light =
                 (*this->lights_)[Random::Range(this->lights_->size())];
             Vector3f light_direction = light->Position() - hit;
@@ -93,21 +138,19 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
             Float cosine = std::max(
                 0.0f, linalg::dot(light_direction.View(), normal.View()));
 
-            Ray3f shadow_ray{hit + normal * 1e-5f, light_direction};
+            Ray3f shadow_ray{hit + normal * Epsilon, light_direction};
             const auto shadow_intersection = Intersect(shadow_ray, background);
             if (shadow_intersection && shadow_intersection->t < distance) {
-                color = Vector3f{0.0f};
+                return Vector3f{0.0f};
             } else {
                 const Float sphere_area =
                     4.0f * std::numbers::pi_v<Float> * distance * distance;
-                color += albedo * light->Intensity() / sphere_area * cosine *
-                         static_cast<Float>(this->lights_->size());
+                return albedo * light->Intensity() / sphere_area * cosine *
+                       static_cast<Float>(this->lights_->size());
             }
         } else {
-            color = albedo;
+            return albedo;
         }
-
-        return color;
     }
 
     /// Generate primary ray for pixel at film coordinates.
