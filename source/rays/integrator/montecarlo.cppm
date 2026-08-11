@@ -66,9 +66,14 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
 
         const auto &mesh = (*this->meshes_)[(*intersection).mesh_index];
         const auto &triangle = mesh.triangles[(*intersection).triangle_index];
+        const auto &materials = *this->materials_;
         const auto &v0 = mesh.vertices[triangle.a];
         const auto &v1 = mesh.vertices[triangle.b];
         const auto &v2 = mesh.vertices[triangle.c];
+
+        const Vector3f albedo = mesh.material_index < 0
+                                    ? Vector3f{1.0f}
+                                    : materials[mesh.material_index].albedo;
 
         Vector3f color{0.0f};
         if (!this->lights_->empty()) {
@@ -95,11 +100,11 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
             } else {
                 const Float sphere_area =
                     4.0f * std::numbers::pi_v<Float> * distance * distance;
-                color += light->Intensity() / sphere_area * cosine *
+                color += albedo * light->Intensity() / sphere_area * cosine *
                          static_cast<Float>(this->lights_->size());
             }
         } else {
-            color = Vector3f{1.0f};
+            color = albedo;
         }
 
         return color;

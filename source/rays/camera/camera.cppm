@@ -55,19 +55,21 @@ export template <std::floating_point T> class Camera {
 
     /// Kick off render only if no render is currently in progress.
     void Render(ThreadPool &thread_pool, const std::vector<Mesh> &meshes,
-                const std::vector<std::unique_ptr<Light>> &lights) {
+                const std::vector<std::unique_ptr<Light>> &lights,
+                const std::vector<Material> &materials) {
         if (!thread_pool.IsIdle()) {
             return;
         }
         scheduler_.Reset();
-        monte_carlo_.Render(position_, rotation_, meshes, lights, film_,
-                            scheduler_, thread_pool);
+        monte_carlo_.Render(position_, rotation_, meshes, lights, materials,
+                            film_, scheduler_, thread_pool);
     }
 
     /// Preview scene with fast rendering.
     void Preview(ThreadPool &thread_pool, unsigned long long time_budget,
                  const std::vector<Mesh> &meshes,
-                 const std::vector<std::unique_ptr<Light>> &lights) {
+                 const std::vector<std::unique_ptr<Light>> &lights,
+                 const std::vector<Material> &materials) {
         if (!thread_pool.IsIdle()) {
             return;
         }
@@ -79,8 +81,8 @@ export template <std::floating_point T> class Camera {
         do {
             preview_.Pass();
             scheduler_.Reset();
-            preview_.Render(position_, rotation_, meshes, lights, film_,
-                            scheduler_, thread_pool);
+            preview_.Render(position_, rotation_, meshes, lights, materials,
+                            film_, scheduler_, thread_pool);
             // Uncomment to simulate longer preview passes.
             // std::this_thread::sleep_for(std::chrono::milliseconds(8));
             thread_pool.WaitIdle();

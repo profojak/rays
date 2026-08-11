@@ -40,12 +40,12 @@ export class Scene {
 
     /// Render scene to film.
     void Render(ThreadPool &thread_pool) {
-        camera_.Render(thread_pool, meshes_, lights_);
+        camera_.Render(thread_pool, meshes_, lights_, materials_);
     }
 
     /// Preview scene with fast rendering.
     void Preview(ThreadPool &thread_pool, unsigned long long time_budget) {
-        camera_.Preview(thread_pool, time_budget, meshes_, lights_);
+        camera_.Preview(thread_pool, time_budget, meshes_, lights_, materials_);
     }
 
   private:

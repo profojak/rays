@@ -7,9 +7,8 @@ import :vector;
 namespace rays {
 
 /// Material.
-export class Material {
+export struct Material {
 
-  public:
     /// Type of material.
     enum class Type {
         Diffuse,
@@ -17,15 +16,14 @@ export class Material {
     };
 
     Material(Type type, Vector3f albedo, bool smooth_shading)
-        : type_(type), albedo_(albedo), smooth_shading_(smooth_shading) {}
+        : type(type), albedo(albedo), smooth_shading(smooth_shading) {}
 
-  private:
     /// Type of material.
-    Type type_;
+    Type type;
     /// Albedo of material.
-    Vector3f albedo_;
+    Vector3f albedo;
     /// Whether material is smooth shaded.
-    bool smooth_shading_;
+    bool smooth_shading;
 };
 
 } // namespace rays
