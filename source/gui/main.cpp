@@ -9,7 +9,7 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
 
-#include "rays.hpp"
+#include "rays.h"
 
 /// Global state for SDL3.
 struct SDL_State {
@@ -240,9 +240,8 @@ int main(int argc, char **argv) {
 
         ProcessInput();
 
-        if (Rays_Camera_Move(input.move_input) |
-            Rays_Camera_Rotate(input.rotate_input)) {
-            input.is_rendering = false;
+        if (!input.is_rendering && (Rays_Camera_Move(input.move_input) |
+                                    Rays_Camera_Rotate(input.rotate_input))) {
             Uint64 const elapsed = SDL_GetTicks() - frame_start;
             Uint64 const remaining = elapsed < target_frame_time_ms
                                          ? target_frame_time_ms - elapsed
@@ -257,6 +256,9 @@ int main(int argc, char **argv) {
             input.is_rendering = true;
         } else if (input.is_rendering) {
             FetchImageData();
+            if (!Rays_Camera_IsRendering()) {
+                input.is_rendering = false;
+            }
         }
 
         RenderImGUI();

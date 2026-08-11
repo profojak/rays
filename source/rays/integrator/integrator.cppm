@@ -1,5 +1,6 @@
 module;
 
+#include <atomic>
 #include <concepts>
 #include <cstddef>
 #include <memory>
@@ -55,12 +56,31 @@ class SamplingIntegrator : public Integrator<T> {
         lights_ = &lights;
         materials_ = &materials;
         const auto num_threads = thread_pool.Size();
+        tasks_remaining_.store(num_threads, std::memory_order_relaxed);
         for (std::size_t i = 0; i < num_threads; ++i) {
             thread_pool.Submit([this, &film, &scheduler] {
                 while (std::optional<Tile<T>> tile = scheduler.NextTile()) {
                     RenderTile(*tile, film);
                 }
+                if (tasks_remaining_.fetch_sub(1, std::memory_order_acq_rel) ==
+                    1) {
+                    tasks_remaining_.notify_all();
+                }
             });
+        }
+    }
+
+    /// Check if render is currently in progress.
+    [[nodiscard]] bool IsRendering() const noexcept {
+        return tasks_remaining_.load(std::memory_order_acquire) != 0;
+    }
+
+    /// Block until in-progress render has finished.
+    void WaitForRender() {
+        auto remaining = tasks_remaining_.load(std::memory_order_acquire);
+        while (remaining != 0) {
+            tasks_remaining_.wait(remaining, std::memory_order_acquire);
+            remaining = tasks_remaining_.load(std::memory_order_acquire);
         }
     }
 
@@ -100,6 +120,8 @@ class SamplingIntegrator : public Integrator<T> {
     const std::vector<std::unique_ptr<Light>> *lights_{};
     /// Scene materials during render.
     const std::vector<Material> *materials_{};
+    /// Number of render tasks not yet finished.
+    std::atomic<std::size_t> tasks_remaining_{0};
 };
 
 } // namespace rays

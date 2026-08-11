@@ -32,6 +32,10 @@ void Rays_Camera_GetResolution(unsigned int *width, unsigned int *height);
 const void *Rays_Camera_ImageData();
 /// Render scene to film.
 void Rays_Camera_Render();
+/// Check if camera render is in progress.
+bool Rays_Camera_IsRendering();
+/// Block until camera render finishes.
+void Rays_Camera_WaitForRender();
 /// Preview scene with fast rendering.
 void Rays_Camera_Preview(unsigned long long time_budget);
 }

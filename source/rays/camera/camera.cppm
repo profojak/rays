@@ -65,6 +65,14 @@ export template <std::floating_point T> class Camera {
                             film_, scheduler_, thread_pool);
     }
 
+    /// Check if a render is currently in progress.
+    [[nodiscard]] bool IsRendering() const noexcept {
+        return monte_carlo_.IsRendering();
+    }
+
+    /// Block until the in-progress render has finished.
+    void WaitForRender() { monte_carlo_.WaitForRender(); }
+
     /// Preview scene with fast rendering.
     void Preview(ThreadPool &thread_pool, unsigned long long time_budget,
                  const std::vector<Mesh> &meshes,

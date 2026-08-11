@@ -5,7 +5,7 @@ module;
 #include <print>
 #include <string>
 
-#include "rays.hpp"
+#include "rays.h"
 
 export module rays;
 
@@ -108,6 +108,12 @@ const void *Camera_ImageData() {
 /// Render scene to film.
 void Camera_Render() { State::scene->Render(State::thread_pool); }
 
+/// Check if camera render is in progress.
+bool Camera_IsRendering() { return State::scene->GetCamera().IsRendering(); }
+
+/// Block until camera render finishes.
+void Camera_WaitForRender() { State::scene->GetCamera().WaitForRender(); }
+
 /// Preview scene with fast rendering.
 void Camera_Preview(unsigned long long time_budget) {
     State::scene->Preview(State::thread_pool, time_budget);
@@ -139,6 +145,10 @@ void Rays_Camera_GetResolution(unsigned int *width, unsigned int *height) {
 const void *Rays_Camera_ImageData() { return rays::Camera_ImageData(); }
 
 void Rays_Camera_Render() { rays::Camera_Render(); }
+
+bool Rays_Camera_IsRendering() { return rays::Camera_IsRendering(); }
+
+void Rays_Camera_WaitForRender() { rays::Camera_WaitForRender(); }
 
 void Rays_Camera_Preview(unsigned long long time_budget) {
     rays::Camera_Preview(time_budget);
