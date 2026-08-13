@@ -109,7 +109,9 @@ const void *ImageData() {
 }
 
 /// Render scene to film.
-void Render() { State::scene->Render(State::thread_pool); }
+void Render(Rays_Options &options) {
+    State::scene->Render(State::thread_pool, options);
+}
 
 /// Check if camera render is in progress.
 bool IsRendering() { return State::scene->GetCamera().IsRendering(); }
@@ -118,8 +120,8 @@ bool IsRendering() { return State::scene->GetCamera().IsRendering(); }
 void WaitForRender() { State::scene->GetCamera().WaitForRender(); }
 
 /// Preview scene with fast rendering.
-void Preview(unsigned long long time_budget) {
-    State::scene->Preview(State::thread_pool, time_budget);
+void Preview(unsigned long long time_budget, Rays_Options &options) {
+    State::scene->Preview(State::thread_pool, time_budget, options);
 }
 
 /// Save camera image to `output.ppm` in given working directory.
@@ -180,14 +182,14 @@ void Rays_GetResolution(unsigned int *width, unsigned int *height) {
 
 const void *Rays_ImageData() { return rays::ImageData(); }
 
-void Rays_Render() { rays::Render(); }
+void Rays_Render(Rays_Options &options) { rays::Render(options); }
 
 bool Rays_IsRendering() { return rays::IsRendering(); }
 
 void Rays_WaitForRender() { rays::WaitForRender(); }
 
-void Rays_Preview(unsigned long long time_budget) {
-    rays::Preview(time_budget);
+void Rays_Preview(unsigned long long time_budget, Rays_Options &options) {
+    rays::Preview(time_budget, options);
 }
 
 void Rays_SaveImage(const char *working_directory) {

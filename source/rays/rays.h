@@ -1,4 +1,10 @@
+#ifndef RAYS_H
+#define RAYS_H
+
 extern "C" { // C API
+
+#include "state/options.h"
+
 /// Scene format types.
 enum Rays_Scene_Type { Rays_Scene_Type_CRT = 0 };
 /// Camera input state.
@@ -31,13 +37,15 @@ void Rays_GetResolution(unsigned int *width, unsigned int *height);
 /// Get pointer to image data.
 const void *Rays_ImageData();
 /// Render scene to film.
-void Rays_Render();
+void Rays_Render(Rays_Options &options);
 /// Check if camera render is in progress.
 bool Rays_IsRendering();
 /// Block until camera render finishes.
 void Rays_WaitForRender();
 /// Preview scene with fast rendering.
-void Rays_Preview(unsigned long long time_budget);
+void Rays_Preview(unsigned long long time_budget, Rays_Options &options);
 /// Save camera image to `output.ppm` in given working directory.
 void Rays_SaveImage(const char *working_directory);
 }
+
+#endif // RAYS_H

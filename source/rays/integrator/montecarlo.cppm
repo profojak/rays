@@ -29,8 +29,6 @@ export template <std::floating_point T>
 class MonteCarloIntegrator : public SamplingIntegrator<T> {
 
   private:
-    /// Number of samples per pixel.
-    UInt samples_per_pixel_ = 4;
     /// Maximum number of reflection bounces.
     UInt max_bounces_ = 4;
 
@@ -46,11 +44,11 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
             for (UInt x = bounds.min[0]; x < bounds.max[0]; ++x) {
                 auto &pixel = tile.PixelAt(x, y);
                 Vector3f sum{0.0f};
-                for (UInt i = 0; i < samples_per_pixel_; ++i) {
+                for (UInt i = 0; i < this->options_->samples_per_pixel; ++i) {
                     const auto ray = GenerateRay(x, y);
                     sum += Sample(ray, film.GetBackground());
                 }
-                sum /= static_cast<T>(samples_per_pixel_);
+                sum /= static_cast<T>(this->options_->samples_per_pixel);
                 pixel = sum;
             }
         }
@@ -129,23 +127,38 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
         }
 
         if (!this->lights_->empty()) {
-            const auto &light =
-                (*this->lights_)[Random::Range(this->lights_->size())];
-            Vector3f light_direction = light->Position() - hit;
-            const Float distance =
-                linalg::vector_two_norm(light_direction.View());
-            light_direction.Normalize();
-            Float cosine = std::max(
-                0.0f, linalg::dot(light_direction.View(), normal.View()));
 
-            Ray3f shadow_ray{hit + normal * Epsilon, light_direction};
-            const auto shadow_intersection = Intersect(shadow_ray, background);
-            if (shadow_intersection && shadow_intersection->t < distance) {
-                return Vector3f{0.0f};
-            } else {
+            // Contribution of single light.
+            const auto sample_light = [&](const auto &light) -> Vector3f {
+                Vector3f light_direction = light->Position() - hit;
+                const Float distance =
+                    linalg::vector_two_norm(light_direction.View());
+                light_direction.Normalize();
+                const Float cosine = std::max(
+                    0.0f, linalg::dot(light_direction.View(), normal.View()));
+
+                Ray3f shadow_ray{hit + normal * Epsilon, light_direction};
+                const auto shadow_intersection =
+                    Intersect(shadow_ray, background);
+                if (shadow_intersection && shadow_intersection->t < distance) {
+                    return Vector3f{0.0f};
+                }
+
                 const Float sphere_area =
                     4.0f * std::numbers::pi_v<Float> * distance * distance;
-                return albedo * light->Intensity() / sphere_area * cosine *
+                return albedo * light->Intensity() / sphere_area * cosine;
+            };
+
+            if (this->options_->sample_all_lights) {
+                Vector3f radiance{0.0f};
+                for (const auto &light : *this->lights_) {
+                    radiance += sample_light(light);
+                }
+                return radiance;
+            } else {
+                const auto &light =
+                    (*this->lights_)[Random::Range(this->lights_->size())];
+                return sample_light(light) *
                        static_cast<Float>(this->lights_->size());
             }
         } else {

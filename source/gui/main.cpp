@@ -39,6 +39,8 @@ struct Rays_State {
     bool is_rendering = false;
     /// Whether render is completed.
     bool is_rendered = false;
+    /// Rendering options.
+    Rays_Options options;
 } rays_state;
 
 /// Per-frame input state.
@@ -148,8 +150,9 @@ void RenderImGUI() {
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui::NewFrame();
 
+    // Keyboard input.
     ImGui::SetNextWindowPos({16, 16}, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize({240, 80}, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(0.f, 0.f), ImGuiCond_Always);
     ImGui::Begin("Hello, Chaos!");
     ImGui::Text(
         "Keyboard input: %c%c%c%c%c%c", input.move_input.forward ? 'W' : '-',
@@ -157,19 +160,34 @@ void RenderImGUI() {
         input.move_input.backward ? 'S' : '-',
         input.move_input.right ? 'D' : '-', input.move_input.down ? 'Q' : '-',
         input.move_input.up ? 'E' : '-');
+
+    // Render & save button.
     ImGui::BeginDisabled(rays_state.is_rendering);
     if (ImGui::Button(rays_state.is_rendering ? "Rendering" : "Render")) {
         rays_state.to_render = true;
     }
+    ImGui::SetItemTooltip("Render the scene from the current view.");
     ImGui::EndDisabled();
     ImGui::SameLine();
     ImGui::BeginDisabled(!rays_state.is_rendered || rays_state.is_rendering);
     if (ImGui::Button("Save .ppm")) {
         Rays_SaveImage(std::filesystem::current_path().string().c_str());
     }
+    ImGui::SetItemTooltip(
+        "Save the render as an output.ppm file to the current directory.");
     ImGui::EndDisabled();
-    ImGui::End();
+    ImGui::Separator();
 
+    // Rendering options.
+    ImGui::Checkbox("Sample all lights", &rays_state.options.sample_all_lights);
+    ImGui::SetItemTooltip("Sample all lights in the scene on each ray hit, or "
+                          "randomly pick one of the lights.");
+    ImGui::Text("Samples per pixel:");
+    ImGui::SetNextItemWidth(128);
+    ImGui::SliderInt("##", &rays_state.options.samples_per_pixel, 1, 32);
+    ImGui::SetItemTooltip("How many rays to cast per pixel.");
+
+    ImGui::End();
     ImGui::Render();
 }
 
@@ -266,12 +284,12 @@ int main(int argc, char **argv) {
             Uint64 const remaining = elapsed < target_frame_time_ms
                                          ? target_frame_time_ms - elapsed
                                          : Uint64{0};
-            Rays_Preview(remaining);
+            Rays_Preview(remaining, rays_state.options);
             FetchImageData();
         }
 
         if (rays_state.to_render) {
-            Rays_Render();
+            Rays_Render(rays_state.options);
             rays_state.to_render = false;
             rays_state.is_rendering = true;
         } else if (rays_state.is_rendering) {

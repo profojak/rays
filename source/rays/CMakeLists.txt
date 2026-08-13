@@ -47,6 +47,7 @@ target_sources(rays
         FILES
             rays.h
             math/math.hpp
+            state/options.h
 )
 
 target_include_directories(rays

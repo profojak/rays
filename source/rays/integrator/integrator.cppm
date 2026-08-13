@@ -1,5 +1,7 @@
 module;
 
+#include "state/options.h"
+
 #include <atomic>
 #include <concepts>
 #include <cstddef>
@@ -32,7 +34,8 @@ export template <std::floating_point T> class Integrator {
                         const std::vector<Mesh> &meshes,
                         const std::vector<std::unique_ptr<Light>> &lights,
                         const std::vector<Material> &materials, Film<T> &film,
-                        Scheduler<T> &scheduler, ThreadPool &thread_pool) = 0;
+                        Scheduler<T> &scheduler, ThreadPool &thread_pool,
+                        Rays_Options &options) = 0;
 
     ~Integrator() = default;
 };
@@ -49,12 +52,14 @@ class SamplingIntegrator : public Integrator<T> {
                 const std::vector<Mesh> &meshes,
                 const std::vector<std::unique_ptr<Light>> &lights,
                 const std::vector<Material> &materials, Film<T> &film,
-                Scheduler<T> &scheduler, ThreadPool &thread_pool) override {
+                Scheduler<T> &scheduler, ThreadPool &thread_pool,
+                Rays_Options &options) override {
         position_ = camera_position;
         rotation_ = camera_rotation;
         meshes_ = &meshes;
         lights_ = &lights;
         materials_ = &materials;
+        options_ = &options;
         const auto num_threads = thread_pool.Size();
         tasks_remaining_.store(num_threads, std::memory_order_relaxed);
         for (std::size_t i = 0; i < num_threads; ++i) {
@@ -113,6 +118,9 @@ class SamplingIntegrator : public Integrator<T> {
     Vector2f inverse_uv_{};
     /// Aspect ratio.
     Float aspect_{};
+
+    /// Render options.
+    Rays_Options *options_{};
 
     /// Scene meshes during render.
     const std::vector<Mesh> *meshes_{};

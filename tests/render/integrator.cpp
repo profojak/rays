@@ -1,5 +1,7 @@
 module;
 
+#include "state/options.h"
+
 #include <chrono>
 #include <doctest/doctest.h>
 #include <memory>
@@ -58,8 +60,9 @@ TEST_CASE("`SamplingIntegrator` detects render completion") {
 
     CHECK_FALSE(integrator.IsRendering());
 
+    Rays_Options options;
     integrator.Render(position, rotation, meshes, lights, materials, film,
-                      scheduler, thread_pool);
+                      scheduler, thread_pool, options);
 
     CHECK(integrator.IsRendering());
 

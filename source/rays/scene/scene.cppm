@@ -1,5 +1,7 @@
 module;
 
+#include "state/options.h"
+
 #include <concepts>
 #include <memory>
 #include <utility>
@@ -39,13 +41,15 @@ export class Scene {
     }
 
     /// Render scene to film.
-    void Render(ThreadPool &thread_pool) {
-        camera_.Render(thread_pool, meshes_, lights_, materials_);
+    void Render(ThreadPool &thread_pool, Rays_Options &options) {
+        camera_.Render(thread_pool, meshes_, lights_, materials_, options);
     }
 
     /// Preview scene with fast rendering.
-    void Preview(ThreadPool &thread_pool, unsigned long long time_budget) {
-        camera_.Preview(thread_pool, time_budget, meshes_, lights_, materials_);
+    void Preview(ThreadPool &thread_pool, unsigned long long time_budget,
+                 Rays_Options &options) {
+        camera_.Preview(thread_pool, time_budget, meshes_, lights_, materials_,
+                        options);
     }
 
   private:
