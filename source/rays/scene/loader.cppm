@@ -33,7 +33,7 @@ export class Loader {
 
     /// Load scene from given file path.
     static std::unique_ptr<Scene> Load(const std::string &path) {
-        std::unreachable();
+        throw std::logic_error{"`Loader::Load()` is not implemented!"};
     }
 };
 
@@ -158,10 +158,15 @@ export class CRTLoader : public Loader {
                     } else if (type_str == "reflective") {
                         type = Material::Type::Reflective;
                     } else {
-                        std::unreachable();
+                        throw std::runtime_error{"Unknown material type `" +
+                                                 type_str + "` in scene `" +
+                                                 path + "`!"};
                     }
                 } else {
-                    std::unreachable();
+                    throw std::runtime_error{
+                        "Material `type` field is missing or invalid in "
+                        "scene `" +
+                        path + "`!"};
                 }
 
                 // Albedo.
@@ -171,7 +176,10 @@ export class CRTLoader : public Loader {
                               albedo_value[1].GetFloat(),
                               albedo_value[2].GetFloat()};
                 } else {
-                    std::unreachable();
+                    throw std::runtime_error{
+                        "Material `albedo` field is missing or invalid in "
+                        "scene `" +
+                        path + "`!"};
                 }
 
                 // Smooth shading.
@@ -180,7 +188,10 @@ export class CRTLoader : public Loader {
                     smooth_shading_value.IsBool()) {
                     smooth_shading = smooth_shading_value.GetBool();
                 } else {
-                    std::unreachable();
+                    throw std::runtime_error{
+                        "Material `smooth_shading` field is missing or "
+                        "invalid in scene `" +
+                        path + "`!"};
                 }
 
                 scene->AddMaterial(
