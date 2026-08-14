@@ -146,17 +146,22 @@ export class CRTLoader : public Loader {
                 }
 
                 Material::Type type;
-                Vector3f albedo;
+                Vector3f albedo{1.0f};
                 bool smooth_shading;
+                Float index_of_refraction = 1.5f;
 
                 // Type.
                 if (const auto &type_value = material["type"];
                     type_value.IsString()) {
                     const std::string type_str = type_value.GetString();
-                    if (type_str == "diffuse") {
-                        type = Material::Type::Diffuse;
+                    if (type_str == "constant") {
+                        type = Material::Type::Constant;
                     } else if (type_str == "reflective") {
                         type = Material::Type::Reflective;
+                    } else if (type_str == "refractive") {
+                        type = Material::Type::Refractive;
+                    } else if (type_str == "diffuse") {
+                        type = Material::Type::Diffuse;
                     } else {
                         throw std::runtime_error{"Unknown material type `" +
                                                  type_str + "` in scene `" +
@@ -175,11 +180,6 @@ export class CRTLoader : public Loader {
                     albedo = {albedo_value[0].GetFloat(),
                               albedo_value[1].GetFloat(),
                               albedo_value[2].GetFloat()};
-                } else {
-                    throw std::runtime_error{
-                        "Material `albedo` field is missing or invalid in "
-                        "scene `" +
-                        path + "`!"};
                 }
 
                 // Smooth shading.
@@ -194,8 +194,14 @@ export class CRTLoader : public Loader {
                         path + "`!"};
                 }
 
-                scene->AddMaterial(
-                    std::move(Material{type, albedo, smooth_shading}));
+                // Index of refraction for refractive materials.
+                if (const auto &ior_value = material["ior"];
+                    ior_value.IsNumber()) {
+                    index_of_refraction = ior_value.GetFloat();
+                }
+
+                scene->AddMaterial(std::move(Material{
+                    type, albedo, smooth_shading, index_of_refraction}));
             }
         }
 

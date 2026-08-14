@@ -3,6 +3,7 @@ module;
 #include "math/math.hpp" // IWYU pragma: keep
 
 #include <algorithm>
+#include <cmath>
 #include <concepts>
 #include <numbers>
 #include <optional>
@@ -102,67 +103,134 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
         const Vector3f hit =
             v0 + edge1 * (*intersection).uv[0] + edge2 * (*intersection).uv[1];
 
-        // Reflective material.
-        if (mesh.material_index >= 0 &&
-            materials[mesh.material_index].type == Material::Type::Reflective) {
-            if (depth >= max_bounces_) {
-                return background;
-            }
+        // Shade based on material type.
+        const auto type = mesh.material_index < 0
+                              ? Material::Type::Diffuse
+                              : materials[mesh.material_index].type;
+        switch (type) {
+        case Material::Type::Constant:
+            return SampleConstant(albedo);
+        case Material::Type::Reflective:
+            return SampleReflective(ray, background, depth, hit, normal,
+                                    albedo);
+        case Material::Type::Refractive:
+            return SampleRefractive(ray, background, depth, hit, normal,
+                                    materials[mesh.material_index]);
+        case Material::Type::Diffuse:
+            return SampleDiffuse(hit, normal, background, albedo);
+        }
+        return background;
+    }
 
-            Vector3f reflection_normal = normal;
-            if (linalg::dot(reflection_normal.View(), ray.direction.View()) >
-                0.0f) {
-                reflection_normal = -reflection_normal;
-            }
-            const Vector3f reflection =
-                ray.direction -
-                reflection_normal *
-                    (2.0f * linalg::dot(ray.direction.View(),
-                                        reflection_normal.View()));
+    /// Constant material.
+    [[nodiscard]] Vector3f
+    SampleConstant(const Vector3f &albedo) const noexcept {
+        return albedo;
+    }
 
-            const Vector3f reflected_color =
-                Sample(Ray3f{hit + reflection_normal * Epsilon, reflection},
-                       background, depth + 1);
-            return albedo * reflected_color;
+    /// Reflective material.
+    [[nodiscard]] Vector3f
+    SampleReflective(const Ray3f &ray, const Vector3f &background,
+                     const UInt depth, const Vector3f &hit,
+                     const Vector3f &normal,
+                     const Vector3f &albedo) const noexcept {
+        if (depth >= max_bounces_) {
+            return background;
         }
 
-        if (!this->lights_->empty()) {
+        Vector3f reflection = normal;
+        if (linalg::dot(reflection.View(), ray.direction.View()) > 0.0f) {
+            reflection = -reflection;
+        }
+        return ReflectRay(ray, background, depth, hit, reflection) * albedo;
+    }
 
-            // Contribution of single light.
-            const auto sample_light = [&](const auto &light) -> Vector3f {
-                Vector3f light_direction = light->Position() - hit;
-                const Float distance =
-                    linalg::vector_two_norm(light_direction.View());
-                light_direction.Normalize();
-                const Float cosine = std::max(
-                    0.0f, linalg::dot(light_direction.View(), normal.View()));
+    /// Refractive material.
+    [[nodiscard]] Vector3f
+    SampleRefractive(const Ray3f &ray, const Vector3f &background,
+                     const UInt depth, const Vector3f &hit,
+                     const Vector3f &normal,
+                     const Material &material) const noexcept {
+        if (depth >= max_bounces_) {
+            return background;
+        }
 
-                Ray3f shadow_ray{hit + normal * Epsilon, light_direction};
-                const auto shadow_intersection =
-                    Intersect(shadow_ray, background);
-                if (shadow_intersection && shadow_intersection->t < distance) {
-                    return Vector3f{0.0f};
-                }
+        // Whether ray is exiting material.
+        const bool is_exiting =
+            linalg::dot(normal.View(), ray.direction.View()) > 0.0f;
+        Vector3f refraction = normal;
+        if (is_exiting) {
+            refraction = -refraction;
+        }
+        const Float eta = is_exiting ? material.index_of_refraction
+                                     : 1.0f / material.index_of_refraction;
+        const Float cos_theta =
+            -linalg::dot(ray.direction.View(), refraction.View());
+        const Float sin2_theta = eta * eta * (1.0f - cos_theta * cos_theta);
 
-                const Float sphere_area =
-                    4.0f * std::numbers::pi_v<Float> * distance * distance;
-                return albedo * light->Intensity() / sphere_area * cosine;
-            };
+        // Total internal reflection.
+        if (sin2_theta > 1.0f) {
+            return ReflectRay(ray, background, depth, hit, refraction);
+        }
 
-            if (this->options_->sample_all_lights) {
-                Vector3f radiance{0.0f};
-                for (const auto &light : *this->lights_) {
-                    radiance += sample_light(light);
-                }
-                return radiance;
-            } else {
-                const auto &light =
-                    (*this->lights_)[Random::Range(this->lights_->size())];
-                return sample_light(light) *
-                       static_cast<Float>(this->lights_->size());
-            }
-        } else {
+        // Refracted ray.
+        const Vector3f refracted_direction =
+            ray.direction * eta +
+            refraction * (eta * cos_theta - std::sqrt(1.0f - sin2_theta));
+        const Vector3f refracted_color =
+            Sample(Ray3f{hit - refraction * Epsilon, refracted_direction},
+                   background, depth + 1);
+
+        // Reflected ray.
+        const Vector3f reflection_color =
+            ReflectRay(ray, background, depth, hit, refraction);
+
+        // Schlick Fresnel approximation.
+        const Float fresnel = 0.5f * std::pow(1.0f - cos_theta, 5.0f);
+        return reflection_color * fresnel + refracted_color * (1.0f - fresnel);
+    }
+
+    /// Diffuse material.
+    [[nodiscard]] Vector3f
+    SampleDiffuse(const Vector3f &hit, const Vector3f &normal,
+                  const Vector3f &background,
+                  const Vector3f &albedo) const noexcept {
+        if (this->lights_->empty()) {
             return albedo;
+        }
+
+        // Contribution of single light.
+        const auto sample_light = [&](const auto &light) -> Vector3f {
+            Vector3f light_direction = light->Position() - hit;
+            const Float distance =
+                linalg::vector_two_norm(light_direction.View());
+            light_direction.Normalize();
+            const Float cosine = std::max(
+                0.0f, linalg::dot(light_direction.View(), normal.View()));
+
+            Ray3f shadow_ray{hit + normal * Epsilon, light_direction};
+            const auto shadow_intersection =
+                Intersect(shadow_ray, background, true);
+            if (shadow_intersection && shadow_intersection->t < distance) {
+                return Vector3f{0.0f};
+            }
+
+            const Float sphere_area =
+                4.0f * std::numbers::pi_v<Float> * distance * distance;
+            return albedo * light->Intensity() / sphere_area * cosine;
+        };
+
+        if (this->options_->sample_all_lights) {
+            Vector3f radiance{0.0f};
+            for (const auto &light : *this->lights_) {
+                radiance += sample_light(light);
+            }
+            return radiance;
+        } else {
+            const auto &light =
+                (*this->lights_)[Random::Range(this->lights_->size())];
+            return sample_light(light) *
+                   static_cast<Float>(this->lights_->size());
         }
     }
 
@@ -182,13 +250,31 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
         return Ray3f{this->position_, direction};
     }
 
+    /// Trace reflected ray at surface point.
+    [[nodiscard]] Vector3f ReflectRay(const Ray3f &ray,
+                                      const Vector3f &background,
+                                      const UInt depth, const Vector3f &hit,
+                                      const Vector3f &normal) const noexcept {
+        const Vector3f reflection_direction =
+            ray.direction -
+            normal * (2.0f * linalg::dot(ray.direction.View(), normal.View()));
+        return Sample(Ray3f{hit + normal * Epsilon, reflection_direction},
+                      background, depth + 1);
+    }
+
     /// Find closest intersection along ray across all meshes.
     [[nodiscard]] std::optional<TriangleIntersection3f>
-    Intersect(const Ray3f &ray, const Vector3f &background) const noexcept {
+    Intersect(const Ray3f &ray, const Vector3f &background,
+              const bool ignore_refractive = false) const noexcept {
         std::optional<TriangleIntersection3f> closest_intersection;
 
         for (UInt i = 0; i < this->meshes_->size(); ++i) {
             const auto &mesh = (*this->meshes_)[i];
+            if (ignore_refractive && mesh.material_index >= 0 &&
+                (*this->materials_)[mesh.material_index].type ==
+                    Material::Type::Refractive) {
+                continue;
+            }
             const auto &vertices = mesh.vertices;
             for (UInt j = 0; j < mesh.triangles.size(); ++j) {
                 const auto &triangle = mesh.triangles[j];
