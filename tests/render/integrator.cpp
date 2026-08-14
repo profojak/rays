@@ -18,6 +18,7 @@ import :matrix;
 import :mesh;
 import :ray;
 import :scheduler;
+import :texture;
 import :thread;
 import :tile;
 import :type;
@@ -57,12 +58,13 @@ TEST_CASE("`SamplingIntegrator` detects render completion") {
     const std::vector<rays::Mesh> meshes;
     const std::vector<std::unique_ptr<rays::Light>> lights;
     const std::vector<rays::Material> materials;
+    const std::vector<rays::Texture> textures;
 
     CHECK_FALSE(integrator.IsRendering());
 
     Rays_Options options;
-    integrator.Render(position, rotation, meshes, lights, materials, film,
-                      scheduler, thread_pool, options);
+    integrator.Render(position, rotation, meshes, lights, materials, textures,
+                      film, scheduler, thread_pool, options);
 
     CHECK(integrator.IsRendering());
 

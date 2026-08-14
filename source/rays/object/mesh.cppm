@@ -26,6 +26,8 @@ export struct Mesh {
     std::vector<Vector3f> vertex_normals;
     /// Face normals.
     std::vector<Vector3f> face_normals;
+    /// Texture coordinates.
+    std::vector<Vector3f> uvs;
 
     /// Recalculate normals.
     void RecalculateNormals() {

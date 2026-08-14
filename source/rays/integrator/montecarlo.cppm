@@ -7,6 +7,7 @@ module;
 #include <concepts>
 #include <numbers>
 #include <optional>
+#include <variant>
 
 export module rays:montecarlo;
 
@@ -19,6 +20,7 @@ import :pixel;
 import :random;
 import :ray;
 import :tile;
+import :texture;
 import :triangle;
 import :type;
 import :vector;
@@ -79,19 +81,14 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
         const auto &v1 = mesh.vertices[triangle.b];
         const auto &v2 = mesh.vertices[triangle.c];
 
-        // Albedo.
-        const Vector3f albedo = mesh.material_index < 0
-                                    ? Vector3f{1.0f}
-                                    : materials[mesh.material_index].albedo;
-
         // Normal.
+        const auto u = (*intersection).uv[0];
+        const auto v = (*intersection).uv[1];
         Vector3f normal;
         if (mesh.material_index < 0 ||
             !materials[mesh.material_index].smooth_shading) {
             normal = mesh.face_normals[(*intersection).triangle_index];
         } else {
-            const auto u = (*intersection).uv[0];
-            const auto v = (*intersection).uv[1];
             normal = mesh.vertex_normals[triangle.a] * (1.0f - u - v) +
                      mesh.vertex_normals[triangle.b] * u +
                      mesh.vertex_normals[triangle.c] * v;
@@ -100,13 +97,21 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
 
         const Vector3f edge1 = v1 - v0;
         const Vector3f edge2 = v2 - v0;
-        const Vector3f hit =
-            v0 + edge1 * (*intersection).uv[0] + edge2 * (*intersection).uv[1];
+        const Vector3f hit = v0 + edge1 * u + edge2 * v;
 
         // Shade based on material type.
         const auto type = mesh.material_index < 0
                               ? Material::Type::Diffuse
                               : materials[mesh.material_index].type;
+        const auto &albedo_variant =
+            mesh.material_index < 0 ? Vector3f{1.0f}
+                                    : materials[mesh.material_index].albedo;
+        const auto albedo =
+            std::holds_alternative<Vector3f>(albedo_variant)
+                ? std::get<Vector3f>(albedo_variant)
+                : SampleTexture(std::get<UInt>(albedo_variant), mesh, triangle,
+                                (*intersection).uv);
+
         switch (type) {
         case Material::Type::Constant:
             return SampleConstant(albedo);
@@ -120,6 +125,21 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
             return SampleDiffuse(hit, normal, background, albedo);
         }
         return background;
+    }
+
+    /// Sample albedo color of texture at given texture coordinates.
+    [[nodiscard]] Vector3f SampleTexture(const UInt texture_index,
+                                         const Mesh &mesh,
+                                         const Triangle &triangle,
+                                         const Vector2f &uv) const noexcept {
+        const auto &texture = (*this->textures_)[texture_index];
+        switch (texture.type) {
+        case Texture::Type::Albedo:
+            return texture.albedo;
+        default:
+            assert(false && "Unknown texture type!");
+            return Vector3f{1.0f};
+        }
     }
 
     /// Constant material.

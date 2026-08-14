@@ -18,6 +18,7 @@ import :mesh;
 import :matrix;
 import :pixel;
 import :scheduler;
+import :texture;
 import :thread;
 import :tile;
 import :type;
@@ -33,7 +34,8 @@ export template <std::floating_point T> class Integrator {
                         const Matrix3f &camera_rotation,
                         const std::vector<Mesh> &meshes,
                         const std::vector<std::unique_ptr<Light>> &lights,
-                        const std::vector<Material> &materials, Film<T> &film,
+                        const std::vector<Material> &materials,
+                        const std::vector<Texture> &textures, Film<T> &film,
                         Scheduler<T> &scheduler, ThreadPool &thread_pool,
                         Rays_Options &options) = 0;
 
@@ -51,7 +53,8 @@ class SamplingIntegrator : public Integrator<T> {
                 const Matrix3f &camera_rotation,
                 const std::vector<Mesh> &meshes,
                 const std::vector<std::unique_ptr<Light>> &lights,
-                const std::vector<Material> &materials, Film<T> &film,
+                const std::vector<Material> &materials,
+                const std::vector<Texture> &textures, Film<T> &film,
                 Scheduler<T> &scheduler, ThreadPool &thread_pool,
                 Rays_Options &options) override {
         position_ = camera_position;
@@ -59,6 +62,7 @@ class SamplingIntegrator : public Integrator<T> {
         meshes_ = &meshes;
         lights_ = &lights;
         materials_ = &materials;
+        textures_ = &textures;
         options_ = &options;
         const auto num_threads = thread_pool.Size();
         tasks_remaining_.store(num_threads, std::memory_order_relaxed);
@@ -128,6 +132,8 @@ class SamplingIntegrator : public Integrator<T> {
     const std::vector<std::unique_ptr<Light>> *lights_{};
     /// Scene materials during render.
     const std::vector<Material> *materials_{};
+    /// Scene textures during render.
+    const std::vector<Texture> *textures_{};
     /// Number of render tasks not yet finished.
     std::atomic<std::size_t> tasks_remaining_{0};
 };

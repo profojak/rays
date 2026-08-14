@@ -2,12 +2,16 @@ module;
 
 #include <rapidjson/document.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <fstream>
+#include <iterator>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <variant>
 
 export module rays:loader;
 
@@ -199,7 +203,7 @@ export class CRTLoader : public Loader {
                 }
 
                 Material::Type type;
-                Vector3f albedo{1.0f};
+                std::variant<Vector3f, UInt> albedo{Vector3f{1.0f}};
                 bool smooth_shading;
                 Float index_of_refraction = 1.5f;
 
@@ -230,9 +234,24 @@ export class CRTLoader : public Loader {
                 // Albedo.
                 if (const auto &albedo_value = material["albedo"];
                     albedo_value.IsArray() && albedo_value.Size() == 3) {
-                    albedo = {albedo_value[0].GetFloat(),
-                              albedo_value[1].GetFloat(),
-                              albedo_value[2].GetFloat()};
+                    albedo = Vector3f{albedo_value[0].GetFloat(),
+                                      albedo_value[1].GetFloat(),
+                                      albedo_value[2].GetFloat()};
+                } else if (albedo_value.IsString()) {
+                    const std::string_view albedo_texture =
+                        albedo_value.GetString();
+                    const auto &textures = scene->GetTextures();
+                    const auto it = std::ranges::find_if(
+                        textures, [&](const Texture &texture) {
+                            return texture.name == albedo_texture;
+                        });
+                    if (it == textures.end()) {
+                        throw std::runtime_error{"Unknown albedo texture `" +
+                                                 std::string{albedo_texture} +
+                                                 "` in scene `" + path + "`!"};
+                    }
+                    albedo =
+                        static_cast<UInt>(std::distance(textures.begin(), it));
                 }
 
                 // Smooth shading.
@@ -284,6 +303,19 @@ export class CRTLoader : public Loader {
                             vertices[i + 2].GetFloat()});
                     }
                     mesh.vertices = std::move(positions);
+                }
+
+                // Texture coordinates.
+                if (const auto &uvs = object["uvs"];
+                    uvs.IsArray() && uvs.Size() % 3 == 0) {
+                    std::vector<Vector3f> tex_coords;
+                    tex_coords.reserve(uvs.Size() / 3);
+                    for (std::size_t i = 0; i < uvs.Size(); i += 3) {
+                        tex_coords.push_back(Vector3f{uvs[i].GetFloat(),
+                                                      uvs[i + 1].GetFloat(),
+                                                      uvs[i + 2].GetFloat()});
+                    }
+                    mesh.uvs = std::move(tex_coords);
                 }
 
                 // Triangles.

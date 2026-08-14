@@ -28,6 +28,11 @@ export class Scene {
         return std::forward<Self>(self).camera_;
     }
 
+    /// Return reference to `Texture` vector.
+    template <typename Self> [[nodiscard]] auto &GetTextures(this Self &&self) {
+        return std::forward<Self>(self).textures_;
+    }
+
     /// Add `Mesh` to scene.
     void AddMesh(const Mesh &&mesh) { meshes_.push_back(std::move(mesh)); }
 
@@ -48,14 +53,15 @@ export class Scene {
 
     /// Render scene to film.
     void Render(ThreadPool &thread_pool, Rays_Options &options) {
-        camera_.Render(thread_pool, meshes_, lights_, materials_, options);
+        camera_.Render(thread_pool, meshes_, lights_, materials_, textures_,
+                       options);
     }
 
     /// Preview scene with fast rendering.
     void Preview(ThreadPool &thread_pool, unsigned long long time_budget,
                  Rays_Options &options) {
         camera_.Preview(thread_pool, time_budget, meshes_, lights_, materials_,
-                        options);
+                        textures_, options);
     }
 
   private:
