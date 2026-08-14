@@ -57,6 +57,7 @@ target_include_directories(rays
     PRIVATE
         ${CMAKE_BINARY_DIR}/deps/stdBLAS/include/experimental
         ${CMAKE_SOURCE_DIR}/deps/RapidJSON/include
+        ${CMAKE_SOURCE_DIR}/deps/stb
 )
 
 target_link_libraries(rays
