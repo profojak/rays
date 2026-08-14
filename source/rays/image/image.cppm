@@ -1,5 +1,8 @@
 module;
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <algorithm>
 #include <utility>
 #include <vector>
@@ -44,6 +47,11 @@ export template <ImageFormat F> class Image {
     template <typename Self>
     [[nodiscard]] auto *Data(this Self &&self) noexcept {
         return std::forward<Self>(self).data_.data();
+    }
+
+    /// Return resolution of image.
+    [[nodiscard]] Vector2u GetResolution() const noexcept {
+        return resolution_;
     }
 
     /// Set image resolution.

@@ -12,6 +12,7 @@ module;
 export module rays:montecarlo;
 
 import :film;
+import :image;
 import :integrator;
 import :material;
 import :mesh;
@@ -143,23 +144,49 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
                                                          : texture.inner_color;
         }
         case Texture::Type::Checker: {
-            const Float u = uv[0];
-            const Float v = uv[1];
-            const Float w = 1.0f - u - v;
-            const Vector3f &uv0 = mesh.uvs[triangle.a];
-            const Vector3f &uv1 = mesh.uvs[triangle.b];
-            const Vector3f &uv2 = mesh.uvs[triangle.c];
-            const Int cell_x = static_cast<Int>(std::floor(
-                (uv0[0] * w + uv1[0] * u + uv2[0] * v) / texture.square_size));
-            const Int cell_y = static_cast<Int>(std::floor(
-                (uv0[1] * w + uv1[1] * u + uv2[1] * v) / texture.square_size));
+            const Vector2f tex_uv = SampleUV(mesh, triangle, uv);
+            const Int cell_x =
+                static_cast<Int>(std::floor(tex_uv[0] / texture.square_size));
+            const Int cell_y =
+                static_cast<Int>(std::floor(tex_uv[1] / texture.square_size));
             return (cell_x + cell_y) % 2 == 0 ? texture.color_A
                                               : texture.color_B;
+        }
+        case Texture::Type::Bitmap: {
+            const Vector2f tex_uv = SampleUV(mesh, triangle, uv);
+            const Vector2u resolution = texture.image.GetResolution();
+            const UInt x = static_cast<UInt>(tex_uv[0] *
+                                             static_cast<Float>(resolution[0]));
+            const UInt y = static_cast<UInt>((1.0f - tex_uv[1]) *
+                                             static_cast<Float>(resolution[1]));
+
+            using ImageType = decltype(texture.image);
+            const auto *pixel = texture.image.Data() +
+                                (y * resolution[0] + x) * ImageType::channels;
+            return Vector3f{static_cast<Float>(pixel[0]) / 255.0f,
+                            static_cast<Float>(pixel[1]) / 255.0f,
+                            static_cast<Float>(pixel[2]) / 255.0f};
         }
         default:
             assert(false && "Unknown texture type!");
             return Vector3f{1.0f};
         }
+    }
+
+    /// Interpolate per-vertex texture coordinates at barycentric point.
+    [[nodiscard]] Vector2f SampleUV(const Mesh &mesh, const Triangle &triangle,
+                                    const Vector2f &uv) const noexcept {
+        const Float u = uv[0];
+        const Float v = uv[1];
+        const Float w = 1.0f - u - v;
+        if (mesh.uvs.empty()) {
+            return {u, v};
+        }
+        const Vector3f &uv0 = mesh.uvs[triangle.a];
+        const Vector3f &uv1 = mesh.uvs[triangle.b];
+        const Vector3f &uv2 = mesh.uvs[triangle.c];
+        return {uv0[0] * w + uv1[0] * u + uv2[0] * v,
+                uv0[1] * w + uv1[1] * u + uv2[1] * v};
     }
 
     /// Constant material.

@@ -1,10 +1,13 @@
 module;
 
 #include <rapidjson/document.h>
+#include <stb_image.h>
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <stdexcept>
@@ -16,6 +19,7 @@ module;
 export module rays:loader;
 
 import :camera;
+import :image;
 import :light;
 import :material;
 import :mesh;
@@ -158,6 +162,7 @@ export class CRTLoader : public Loader {
                 Vector3f color_A{1.0f};
                 Vector3f color_B{1.0f};
                 Float square_size = 0.1f;
+                Image<ImageFormat::R8G8B8A8> image{Vector2u{1, 1}};
 
                 // Name.
                 if (const auto &name_value = texture["name"];
@@ -179,12 +184,12 @@ export class CRTLoader : public Loader {
                         type = Texture::Type::Edges;
                     } else if (type_str == "checker") {
                         type = Texture::Type::Checker;
+                    } else if (type_str == "bitmap") {
+                        type = Texture::Type::Bitmap;
                     } else {
-                        /*
                         throw std::runtime_error{"Unknown texture type `" +
                                                  type_str + "` in scene `" +
                                                  path + "`!"};
-                                                 */
                     }
                 } else {
                     throw std::runtime_error{"Texture `type` field is "
@@ -238,9 +243,41 @@ export class CRTLoader : public Loader {
                     square_size = square_size_value.GetFloat();
                 }
 
+                // Bitmap.
+                if (const auto &file_path_value = texture["file_path"];
+                    file_path_value.IsString()) {
+                    const std::string raw_path = file_path_value.GetString();
+                    const std::size_t offset = raw_path.find_first_not_of('/');
+                    if (offset != std::string::npos) {
+                        const std::filesystem::path file_path =
+                            std::filesystem::path{path}.parent_path() /
+                            raw_path.substr(offset);
+
+                        int width, height, channels;
+                        stbi_uc *data =
+                            stbi_load(file_path.string().c_str(), &width,
+                                      &height, &channels, 4);
+                        if (data == nullptr) {
+                            throw std::runtime_error{
+                                "Failed to load texture image `" +
+                                file_path.string() +
+                                "`: " + stbi_failure_reason()};
+                        }
+                        image.SetResolution(
+                            Vector2u{static_cast<UInt>(width),
+                                     static_cast<UInt>(height)});
+                        std::memcpy(image.Data(), data,
+                                    static_cast<std::size_t>(width) * height *
+                                        ImageFormatTraits<
+                                            ImageFormat::R8G8B8A8>::channels);
+                        stbi_image_free(data);
+                    }
+                }
+
                 scene->AddTexture(Texture{std::move(name), type, albedo,
                                           edge_color, inner_color, edge_width,
-                                          color_A, color_B, square_size});
+                                          color_A, color_B, square_size,
+                                          std::move(image)});
             }
         }
 
