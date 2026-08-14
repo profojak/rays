@@ -24,8 +24,9 @@ export namespace rays {
 void Greet() { std::println("Hello, Chaos!"); }
 
 /// Load scene from file.
-void LoadScene(const std::string &path, Loader::Type type) {
-    switch (type) {
+void LoadScene(const std::string &path, Rays_Scene_Type type) {
+    const auto loader_type = static_cast<rays::Loader::Type>(type);
+    switch (loader_type) {
     case Loader::Type::CRT:
         State::scene = CRTLoader::Load(path);
         break;
@@ -163,7 +164,7 @@ extern "C" { // C API
 void Rays_Greet() { rays::Greet(); }
 
 void Rays_LoadScene(const char *path, Rays_Scene_Type type) {
-    rays::LoadScene(path, static_cast<rays::Loader::Type>(type));
+    rays::LoadScene(path, type);
 }
 
 bool Rays_MoveCamera(const Rays_Camera_MoveInput &input) {
