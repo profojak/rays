@@ -16,6 +16,7 @@ import :light;
 import :material;
 import :mesh;
 import :scene;
+import :texture;
 import :triangle;
 import :type;
 import :vector;
@@ -134,6 +135,58 @@ export class CRTLoader : public Loader {
                 }
 
                 scene->AddLight(PointLight{intensity, position});
+            }
+        }
+
+        // Textures.
+        if (const auto &textures = document["textures"]; textures.IsArray()) {
+            for (const auto &texture : textures.GetArray()) {
+                if (!texture.IsObject()) {
+                    continue;
+                }
+
+                std::string name;
+                Texture::Type type;
+                Vector3f albedo{1.0f};
+
+                // Name.
+                if (const auto &name_value = texture["name"];
+                    name_value.IsString()) {
+                    name = name_value.GetString();
+                } else {
+                    throw std::runtime_error{"Texture `name` field is "
+                                             "missing or invalid in scene `" +
+                                             path + "`!"};
+                }
+
+                // Type.
+                if (const auto &type_value = texture["type"];
+                    type_value.IsString()) {
+                    const std::string type_str = type_value.GetString();
+                    if (type_str == "albedo") {
+                        type = Texture::Type::Albedo;
+                    } else {
+                        /*
+                        throw std::runtime_error{"Unknown texture type `" +
+                                                 type_str + "` in scene `" +
+                                                 path + "`!"};
+                                                 */
+                    }
+                } else {
+                    throw std::runtime_error{"Texture `type` field is "
+                                             "missing or invalid in scene `" +
+                                             path + "`!"};
+                }
+
+                // Albedo.
+                if (const auto &albedo_value = texture["albedo"];
+                    albedo_value.IsArray() && albedo_value.Size() == 3) {
+                    albedo = {albedo_value[0].GetFloat(),
+                              albedo_value[1].GetFloat(),
+                              albedo_value[2].GetFloat()};
+                }
+
+                scene->AddTexture(Texture{std::move(name), type, albedo});
             }
         }
 

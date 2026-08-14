@@ -13,6 +13,7 @@ import :camera;
 import :light;
 import :material;
 import :mesh;
+import :texture;
 import :thread;
 import :type;
 
@@ -40,6 +41,11 @@ export class Scene {
         materials_.push_back(std::move(material));
     }
 
+    /// Add `Texture` to scene.
+    void AddTexture(const Texture &&texture) {
+        textures_.push_back(std::move(texture));
+    }
+
     /// Render scene to film.
     void Render(ThreadPool &thread_pool, Rays_Options &options) {
         camera_.Render(thread_pool, meshes_, lights_, materials_, options);
@@ -61,6 +67,8 @@ export class Scene {
     std::vector<std::unique_ptr<Light>> lights_;
     /// Materials.
     std::vector<Material> materials_;
+    /// Textures.
+    std::vector<Texture> textures_;
 };
 
 } // namespace rays
