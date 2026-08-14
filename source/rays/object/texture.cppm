@@ -17,13 +17,16 @@ export struct Texture {
     enum class Type {
         Albedo,
         Edges,
+        Checker,
     };
 
     Texture(std::string name, Type type, Vector3f albedo, Vector3f edge_color,
-            Vector3f inner_color, Float edge_width)
+            Vector3f inner_color, Float edge_width, Vector3f color_A,
+            Vector3f color_B, Float square_size)
         : name{std::move(name)}, type{type}, albedo{albedo},
           edge_color{edge_color}, inner_color{inner_color},
-          edge_width{edge_width} {}
+          edge_width{edge_width}, color_A{color_A}, color_B{color_B},
+          square_size{square_size} {}
 
     /// Name of texture.
     std::string name;
@@ -37,6 +40,12 @@ export struct Texture {
     Vector3f inner_color;
     /// Width of texture edges.
     Float edge_width;
+    /// First color of checker texture.
+    Vector3f color_A;
+    /// Second color of checker texture.
+    Vector3f color_B;
+    /// Size of checker square.
+    Float square_size;
 };
 
 } // namespace rays

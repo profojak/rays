@@ -155,6 +155,9 @@ export class CRTLoader : public Loader {
                 Vector3f edge_color{1.0f};
                 Vector3f inner_color{1.0f};
                 Float edge_width = 0.1f;
+                Vector3f color_A{1.0f};
+                Vector3f color_B{1.0f};
+                Float square_size = 0.1f;
 
                 // Name.
                 if (const auto &name_value = texture["name"];
@@ -174,6 +177,8 @@ export class CRTLoader : public Loader {
                         type = Texture::Type::Albedo;
                     } else if (type_str == "edges") {
                         type = Texture::Type::Edges;
+                    } else if (type_str == "checker") {
+                        type = Texture::Type::Checker;
                     } else {
                         /*
                         throw std::runtime_error{"Unknown texture type `" +
@@ -215,8 +220,27 @@ export class CRTLoader : public Loader {
                     edge_width = edge_width_value.GetFloat();
                 }
 
+                // Checker.
+                if (const auto &color_a_value = texture["color_A"];
+                    color_a_value.IsArray() && color_a_value.Size() == 3) {
+                    color_A = {color_a_value[0].GetFloat(),
+                               color_a_value[1].GetFloat(),
+                               color_a_value[2].GetFloat()};
+                }
+                if (const auto &color_b_value = texture["color_B"];
+                    color_b_value.IsArray() && color_b_value.Size() == 3) {
+                    color_B = {color_b_value[0].GetFloat(),
+                               color_b_value[1].GetFloat(),
+                               color_b_value[2].GetFloat()};
+                }
+                if (const auto &square_size_value = texture["square_size"];
+                    square_size_value.IsNumber()) {
+                    square_size = square_size_value.GetFloat();
+                }
+
                 scene->AddTexture(Texture{std::move(name), type, albedo,
-                                          edge_color, inner_color, edge_width});
+                                          edge_color, inner_color, edge_width,
+                                          color_A, color_B, square_size});
             }
         }
 

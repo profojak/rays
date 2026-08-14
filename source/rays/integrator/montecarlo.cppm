@@ -142,6 +142,20 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
             return distance_to_edge < texture.edge_width ? texture.edge_color
                                                          : texture.inner_color;
         }
+        case Texture::Type::Checker: {
+            const Float u = uv[0];
+            const Float v = uv[1];
+            const Float w = 1.0f - u - v;
+            const Vector3f &uv0 = mesh.uvs[triangle.a];
+            const Vector3f &uv1 = mesh.uvs[triangle.b];
+            const Vector3f &uv2 = mesh.uvs[triangle.c];
+            const Int cell_x = static_cast<Int>(std::floor(
+                (uv0[0] * w + uv1[0] * u + uv2[0] * v) / texture.square_size));
+            const Int cell_y = static_cast<Int>(std::floor(
+                (uv0[1] * w + uv1[1] * u + uv2[1] * v) / texture.square_size));
+            return (cell_x + cell_y) % 2 == 0 ? texture.color_A
+                                              : texture.color_B;
+        }
         default:
             assert(false && "Unknown texture type!");
             return Vector3f{1.0f};
