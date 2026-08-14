@@ -26,6 +26,9 @@ export template <std::floating_point T> class Scheduler {
     /// Set film size.
     virtual void SetFilmSize(const Vector2u &film_size) = 0;
 
+    /// Set tile block size.
+    virtual void SetBlockSize(UInt block_size) = 0;
+
   protected:
     Scheduler() = default;
 };
@@ -37,10 +40,8 @@ class SpiralScheduler : public Scheduler<T> {
   public:
     /// Initialize with film resolution.
     SpiralScheduler(const Vector2u &film_resolution, const UInt block_size)
-        : film_resolution_{film_resolution}, block_size_{block_size} {
-        block_grid_size_ = (film_resolution + block_size_ - 1) / block_size_;
-        block_count_ = block_grid_size_[0] * block_grid_size_[1];
-        Reset();
+        : film_resolution_{film_resolution} {
+        SetBlockSize(block_size);
     }
 
     SpiralScheduler(const SpiralScheduler &other)
@@ -58,6 +59,14 @@ class SpiralScheduler : public Scheduler<T> {
         film_resolution_ = film_size;
         block_grid_size_ = (film_resolution_ + block_size_ - 1) / block_size_;
         block_count_ = block_grid_size_[0] * block_grid_size_[1];
+    }
+
+    /// Set tile block size.
+    void SetBlockSize(const UInt block_size) override {
+        block_size_ = block_size;
+        block_grid_size_ = (film_resolution_ + block_size_ - 1) / block_size_;
+        block_count_ = block_grid_size_[0] * block_grid_size_[1];
+        Reset();
     }
 
     /// Reset scheduler to initial state.

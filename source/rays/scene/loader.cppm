@@ -92,6 +92,11 @@ export class CRTLoader : public Loader {
                     scene->GetCamera().SetFilmSize(
                         Vector2u{width.GetUint(), height.GetUint()});
                 }
+
+                const auto &bucket_size = image["bucket_size"];
+                if (bucket_size.IsUint()) {
+                    scene->GetCamera().SetBlockSize(bucket_size.GetUint());
+                }
             }
         }
 

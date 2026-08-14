@@ -44,6 +44,11 @@ export template <std::floating_point T> class Camera {
         scheduler_.SetFilmSize(film_size);
     }
 
+    /// Set tile block size.
+    void SetBlockSize(const UInt bucket_size) {
+        scheduler_.SetBlockSize(bucket_size);
+    }
+
     /// Set camera position.
     void SetPosition(const Vector3f &position) { position_ = position; }
 
