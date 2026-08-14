@@ -152,6 +152,9 @@ export class CRTLoader : public Loader {
                 std::string name;
                 Texture::Type type;
                 Vector3f albedo{1.0f};
+                Vector3f edge_color{1.0f};
+                Vector3f inner_color{1.0f};
+                Float edge_width = 0.1f;
 
                 // Name.
                 if (const auto &name_value = texture["name"];
@@ -169,6 +172,8 @@ export class CRTLoader : public Loader {
                     const std::string type_str = type_value.GetString();
                     if (type_str == "albedo") {
                         type = Texture::Type::Albedo;
+                    } else if (type_str == "edges") {
+                        type = Texture::Type::Edges;
                     } else {
                         /*
                         throw std::runtime_error{"Unknown texture type `" +
@@ -190,7 +195,28 @@ export class CRTLoader : public Loader {
                               albedo_value[2].GetFloat()};
                 }
 
-                scene->AddTexture(Texture{std::move(name), type, albedo});
+                // Edge.
+                if (const auto &edge_color_value = texture["edge_color"];
+                    edge_color_value.IsArray() &&
+                    edge_color_value.Size() == 3) {
+                    edge_color = {edge_color_value[0].GetFloat(),
+                                  edge_color_value[1].GetFloat(),
+                                  edge_color_value[2].GetFloat()};
+                }
+                if (const auto &inner_color_value = texture["inner_color"];
+                    inner_color_value.IsArray() &&
+                    inner_color_value.Size() == 3) {
+                    inner_color = {inner_color_value[0].GetFloat(),
+                                   inner_color_value[1].GetFloat(),
+                                   inner_color_value[2].GetFloat()};
+                }
+                if (const auto &edge_width_value = texture["edge_width"];
+                    edge_width_value.IsNumber()) {
+                    edge_width = edge_width_value.GetFloat();
+                }
+
+                scene->AddTexture(Texture{std::move(name), type, albedo,
+                                          edge_color, inner_color, edge_width});
             }
         }
 

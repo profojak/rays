@@ -136,6 +136,12 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
         switch (texture.type) {
         case Texture::Type::Albedo:
             return texture.albedo;
+        case Texture::Type::Edges: {
+            const Float w = 1.0f - uv[0] - uv[1];
+            const Float distance_to_edge = std::min({uv[0], uv[1], w});
+            return distance_to_edge < texture.edge_width ? texture.edge_color
+                                                         : texture.inner_color;
+        }
         default:
             assert(false && "Unknown texture type!");
             return Vector3f{1.0f};
