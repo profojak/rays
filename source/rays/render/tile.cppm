@@ -14,7 +14,7 @@ namespace rays {
 /// Film tile.
 export template <std::floating_point T> class Tile {
   public:
-    Tile(const Bounds2u &bounds) : bounds_{bounds}, pixels_{bounds.Area()} {}
+    Tile(const Bounds2u &bounds) : bounds_{bounds}, pixels_{bounds.Area2D()} {}
 
     /// Return reference to pixel at absolute film coordinates.
     template <typename Self>
