@@ -11,6 +11,7 @@ module;
 
 export module rays:integrator;
 
+import :bvh;
 import :film;
 import :light;
 import :material;
@@ -64,6 +65,9 @@ class SamplingIntegrator : public Integrator<T> {
         materials_ = &materials;
         textures_ = &textures;
         options_ = &options;
+
+        bvh_.Build(meshes);
+
         const auto num_threads = thread_pool.Size();
         tasks_remaining_.store(num_threads, std::memory_order_relaxed);
         for (std::size_t i = 0; i < num_threads; ++i) {
@@ -125,6 +129,9 @@ class SamplingIntegrator : public Integrator<T> {
 
     /// Render options.
     Rays_Options *options_{};
+
+    /// Bounding volume hierarchy used to accelerate intersections.
+    BVH bvh_;
 
     /// Scene meshes during render.
     const std::vector<Mesh> *meshes_{};

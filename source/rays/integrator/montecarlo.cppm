@@ -333,35 +333,42 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
     [[nodiscard]] std::optional<TriangleIntersection3f>
     Intersect(const Ray3f &ray, const Vector3f &background,
               const bool ignore_refractive = false) const noexcept {
-        std::optional<TriangleIntersection3f> closest_intersection;
+        if (this->options_->use_bvh) {
+            return this->bvh_.Intersect(ray, [&](const UInt mesh_index) {
+                if (!ignore_refractive) {
+                    return false;
+                }
+                const auto &mesh = (*this->meshes_)[mesh_index];
+                return mesh.material_index >= 0 &&
+                       (*this->materials_)[mesh.material_index].type ==
+                           Material::Type::Refractive;
+            });
 
-        for (UInt i = 0; i < this->meshes_->size(); ++i) {
-            const auto &mesh = (*this->meshes_)[i];
-            if (ignore_refractive && mesh.material_index >= 0 &&
-                (*this->materials_)[mesh.material_index].type ==
-                    Material::Type::Refractive) {
-                continue;
-            }
-            const auto &vertices = mesh.vertices;
-            for (UInt j = 0; j < mesh.triangles.size(); ++j) {
-                const auto &triangle = mesh.triangles[j];
-                const auto intersection = triangle.Intersect(
-                    ray, vertices[triangle.a], vertices[triangle.b],
-                    vertices[triangle.c]);
-                if (intersection &&
-                    (!closest_intersection ||
-                     intersection->t < closest_intersection->t)) {
-                    closest_intersection = intersection;
-                    closest_intersection->mesh_index = i;
-                    closest_intersection->triangle_index = j;
+        } else {
+            std::optional<TriangleIntersection3f> closest;
+            for (UInt i = 0; i < this->meshes_->size(); ++i) {
+                const auto &mesh = (*this->meshes_)[i];
+                if (ignore_refractive && mesh.material_index >= 0 &&
+                    (*this->materials_)[mesh.material_index].type ==
+                        Material::Type::Refractive) {
+                    continue;
+                }
+                const auto &vertices = mesh.vertices;
+                for (UInt j = 0; j < mesh.triangles.size(); ++j) {
+                    const auto &triangle = mesh.triangles[j];
+                    const auto intersection = triangle.Intersect(
+                        ray, vertices[triangle.a], vertices[triangle.b],
+                        vertices[triangle.c]);
+                    if (intersection &&
+                        (!closest || intersection->t < closest->t)) {
+                        closest = intersection;
+                        closest->mesh_index = i;
+                        closest->triangle_index = j;
+                    }
                 }
             }
+            return closest;
         }
-        if (!closest_intersection) {
-            return std::nullopt;
-        }
-
-        return closest_intersection;
     }
 };
 

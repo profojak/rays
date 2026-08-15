@@ -186,6 +186,10 @@ void RenderImGUI() {
     ImGui::SetNextItemWidth(128);
     ImGui::SliderInt("##", &rays_state.options.samples_per_pixel, 1, 32);
     ImGui::SetItemTooltip("How many rays to cast per pixel.");
+    ImGui::Separator();
+    ImGui::Checkbox("Use two-level SBVH", &rays_state.options.use_bvh);
+    ImGui::SetItemTooltip("Use two-level bounding volume hierarchy to "
+                          "accelerate ray-triangle intersections.");
 
     ImGui::End();
     ImGui::Render();

@@ -102,35 +102,33 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
     [[nodiscard]] std::variant<std::monostate, TriangleIntersection3f,
                                SphereIntersection3f>
     Intersect(const Ray3f &ray) const noexcept {
-        std::variant<std::monostate, TriangleIntersection3f,
-                     SphereIntersection3f>
-            closest_intersection;
+        std::optional<TriangleIntersection3f> triangle_hit;
+        if (this->options_->use_bvh) {
+            triangle_hit = this->bvh_.Intersect(ray);
 
-        for (UInt i = 0; i < this->meshes_->size(); ++i) {
-            const auto &mesh = (*this->meshes_)[i];
-            const auto &vertices = mesh.vertices;
-            for (UInt j = 0; j < mesh.triangles.size(); ++j) {
-                const auto &triangle = mesh.triangles[j];
-                const auto intersection = triangle.Intersect(
-                    ray, vertices[triangle.a], vertices[triangle.b],
-                    vertices[triangle.c]);
-                const auto *closest =
-                    std::get_if<TriangleIntersection3f>(&closest_intersection);
-                if (intersection &&
-                    (!closest || intersection->t < closest->t)) {
-                    TriangleIntersection3f hit = *intersection;
-                    hit.mesh_index = i;
-                    hit.triangle_index = j;
-                    closest_intersection = hit;
+        } else {
+            for (UInt i = 0; i < this->meshes_->size(); ++i) {
+                const auto &mesh = (*this->meshes_)[i];
+                const auto &vertices = mesh.vertices;
+                for (UInt j = 0; j < mesh.triangles.size(); ++j) {
+                    const auto &triangle = mesh.triangles[j];
+                    const auto intersection = triangle.Intersect(
+                        ray, vertices[triangle.a], vertices[triangle.b],
+                        vertices[triangle.c]);
+                    if (intersection &&
+                        (!triangle_hit || intersection->t < triangle_hit->t)) {
+                        triangle_hit = intersection;
+                        triangle_hit->mesh_index = i;
+                        triangle_hit->triangle_index = j;
+                    }
                 }
             }
         }
 
         // Light spheres closer than any triangle.
-        const auto *closest =
-            std::get_if<TriangleIntersection3f>(&closest_intersection);
-        const Float triangle_t =
-            closest ? closest->t : std::numeric_limits<Float>::infinity();
+        const Float triangle_t = triangle_hit
+                                     ? triangle_hit->t
+                                     : std::numeric_limits<Float>::infinity();
         for (const auto &light : *this->lights_) {
             if (const auto *point_light =
                     dynamic_cast<const PointLight *>(light.get())) {
@@ -142,7 +140,10 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
             }
         }
 
-        return closest_intersection;
+        if (triangle_hit) {
+            return *triangle_hit;
+        }
+        return std::monostate{};
     }
 
     /// Shade triangle facing toward camera.
