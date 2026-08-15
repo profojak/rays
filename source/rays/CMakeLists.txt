@@ -29,6 +29,7 @@ target_sources(rays
             object/texture.cppm
             object/triangle.cppm
 
+            render/bvh.cppm
             render/ray.cppm
             render/scheduler.cppm
             render/tile.cppm
