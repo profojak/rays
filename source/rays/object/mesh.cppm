@@ -18,6 +18,8 @@ export struct Mesh {
 
     /// Material index.
     Int material_index{-1};
+    /// World-space offset.
+    Vector3f position{};
     /// Vertices.
     std::vector<Vector3f> vertices;
     /// Triangles.

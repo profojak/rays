@@ -111,13 +111,14 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
             for (UInt i = 0; i < this->meshes_->size(); ++i) {
                 const auto &mesh = (*this->meshes_)[i];
                 const auto &vertices = mesh.vertices;
+                const Ray3f mesh_ray{ray.origin - mesh.position, ray.direction};
                 const bool back_face_culling =
                     mesh.material_index >= 0 &&
                     (*this->materials_)[mesh.material_index].back_face_culling;
                 for (UInt j = 0; j < mesh.triangles.size(); ++j) {
                     const auto &triangle = mesh.triangles[j];
                     const auto intersection = triangle.Intersect(
-                        ray, vertices[triangle.a], vertices[triangle.b],
+                        mesh_ray, vertices[triangle.a], vertices[triangle.b],
                         vertices[triangle.c], back_face_culling);
                     if (intersection &&
                         (!triangle_hit || intersection->t < triangle_hit->t)) {

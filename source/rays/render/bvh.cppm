@@ -109,10 +109,22 @@ export class BVH {
         top_refs_.clear();
         bottom_nodes_.assign(meshes.size(), {});
         bottom_refs_.assign(meshes.size(), {});
+        mesh_bounds_local_.assign(meshes.size(), Bounds3f{});
+        for (UInt m = 0; m < meshes.size(); ++m)
+            mesh_bounds_local_[m] = MeshBounds(meshes[m]);
 
         BuildTopLevel();
         for (UInt m = 0; m < meshes.size(); ++m)
             BuildBottomLevel(m);
+    }
+
+    /// Update BVH hierarchy for given meshes.
+    void Update(const std::vector<Mesh> &meshes,
+                const std::vector<Material> &materials) {
+        if (meshes_ == &meshes)
+            Refit();
+        else
+            Build(meshes, materials);
     }
 
     /// Intersect `Ray` against BVH hierarchy and return closest triangle.
@@ -157,6 +169,8 @@ export class BVH {
     std::vector<std::vector<Node>> bottom_nodes_;
     /// Per-mesh bottom-level leaf references.
     std::vector<std::vector<UInt>> bottom_refs_;
+    /// Per-mesh bounds in local space.
+    std::vector<Bounds3f> mesh_bounds_local_;
     /// Union of all mesh bounds.
     Bounds3f bounds_;
 
@@ -171,7 +185,8 @@ export class BVH {
         std::vector<Reference> references =
             std::views::iota(0u, static_cast<UInt>(meshes.size())) |
             std::views::transform([&](const UInt m) {
-                return Reference{m, MeshBounds(meshes[m])};
+                return Reference{m, TranslateBounds(mesh_bounds_local_[m],
+                                                    meshes[m].position)};
             }) |
             std::ranges::to<std::vector>();
 
@@ -198,6 +213,38 @@ export class BVH {
         if (!references.empty())
             BuildRecursively(references, nodes, leaf_refs, 0, max_leaf_size,
                              true, &mesh);
+    }
+
+    /// Refit only top-level BVH from current object positions, reusing existing
+    /// per-mesh bottom-level trees.
+    void Refit() {
+        if (top_nodes_.empty()) {
+            bounds_ = Bounds3f{};
+            return;
+        }
+        bounds_ = RefitNode(0u, *meshes_);
+    }
+
+    /// Refit of `node_index`, returning its recomputed bounds.
+    Bounds3f RefitNode(const UInt node_index, const std::vector<Mesh> &meshes) {
+        Node &node = top_nodes_[node_index];
+        if (node.IsLeaf()) {
+            Bounds3f bounds;
+            const UInt first = node.FirstReference();
+            const UInt count = node.ReferenceCount();
+            for (UInt i = 0; i < count; ++i) {
+                const UInt m = top_refs_[first + i];
+                bounds.Expand(
+                    TranslateBounds(mesh_bounds_local_[m], meshes[m].position));
+            }
+            node.bounds = bounds;
+            return bounds;
+        }
+        Bounds3f bounds;
+        bounds.Expand(RefitNode(node.LeftChild(), meshes));
+        bounds.Expand(RefitNode(node.RightChild(), meshes));
+        node.bounds = bounds;
+        return bounds;
     }
 
     /// Recursively subdivide references into BVH subtree rooted at freshly
@@ -598,6 +645,15 @@ export class BVH {
             });
     }
 
+    /// Translate local bounds by offset to obtain world-space bounds.
+    static Bounds3f TranslateBounds(const Bounds3f &bounds,
+                                    const Vector3f &offset) noexcept {
+        Bounds3f result;
+        result.min = bounds.min + offset;
+        result.max = bounds.max + offset;
+        return result;
+    }
+
     /// Clip triangle to axis-aligned bounds using Sutherland-Hodgman.
     Bounds3f ClipTriangle(const UInt triangle_index, const Mesh &mesh,
                           const Bounds3f &box) const {
@@ -716,32 +772,36 @@ export class BVH {
             mesh.material_index >= 0 && materials_ != nullptr &&
             (*materials_)[mesh.material_index].back_face_culling;
 
+        // Translate ray into mesh local space.
+        const Ray3f local_ray{ray.origin - mesh.position, ray.direction};
+
         Float near_t, far_t;
-        if (!nodes[0].bounds.Intersect(ray, near_t, far_t))
+        if (!nodes[0].bounds.Intersect(local_ray, near_t, far_t))
             return;
         near_t = std::max(near_t, Float{0});
         if (near_t > far_t || near_t > max_t)
             return;
 
-        Traverse(
-            nodes, ray, near_t, max_t, [&](const UInt first, const UInt count) {
-                for (UInt i = 0; i < count; ++i) {
-                    const UInt triangle_index = leaf_refs[first + i];
-                    const Triangle &triangle = mesh.triangles[triangle_index];
-                    const auto intersection = triangle.Intersect(
-                        ray, mesh.vertices[triangle.a],
-                        mesh.vertices[triangle.b], mesh.vertices[triangle.c],
-                        back_face_culling);
-                    if (intersection &&
-                        (!closest || intersection->t < closest->t) &&
-                        intersection->t <= max_t) {
-                        closest = intersection;
-                        closest->mesh_index = mesh_index;
-                        closest->triangle_index = triangle_index;
-                        max_t = intersection->t;
-                    }
-                }
-            });
+        Traverse(nodes, local_ray, near_t, max_t,
+                 [&](const UInt first, const UInt count) {
+                     for (UInt i = 0; i < count; ++i) {
+                         const UInt triangle_index = leaf_refs[first + i];
+                         const Triangle &triangle =
+                             mesh.triangles[triangle_index];
+                         const auto intersection = triangle.Intersect(
+                             local_ray, mesh.vertices[triangle.a],
+                             mesh.vertices[triangle.b],
+                             mesh.vertices[triangle.c], back_face_culling);
+                         if (intersection &&
+                             (!closest || intersection->t < closest->t) &&
+                             intersection->t <= max_t) {
+                             closest = intersection;
+                             closest->mesh_index = mesh_index;
+                             closest->triangle_index = triangle_index;
+                             max_t = intersection->t;
+                         }
+                     }
+                 });
     }
 
     /// Generic depth-first BVH traversal shared by top-level and bottom-level

@@ -98,7 +98,7 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
 
         const Vector3f edge1 = v1 - v0;
         const Vector3f edge2 = v2 - v0;
-        const Vector3f hit = v0 + edge1 * u + edge2 * v;
+        const Vector3f hit = v0 + edge1 * u + edge2 * v + mesh.position;
 
         // Shade based on material type.
         const auto type = mesh.material_index < 0
@@ -377,13 +377,14 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
                     continue;
                 }
                 const auto &vertices = mesh.vertices;
+                const Ray3f mesh_ray{ray.origin - mesh.position, ray.direction};
                 const bool back_face_culling =
                     mesh.material_index >= 0 &&
                     (*this->materials_)[mesh.material_index].back_face_culling;
                 for (UInt j = 0; j < mesh.triangles.size(); ++j) {
                     const auto &triangle = mesh.triangles[j];
                     const auto intersection = triangle.Intersect(
-                        ray, vertices[triangle.a], vertices[triangle.b],
+                        mesh_ray, vertices[triangle.a], vertices[triangle.b],
                         vertices[triangle.c], back_face_culling);
                     if (intersection &&
                         (!closest || intersection->t < closest->t)) {
