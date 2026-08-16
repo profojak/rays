@@ -158,6 +158,19 @@ void SaveImage(const std::string &working_directory) {
     std::println("Saved image to {}", path.string());
 }
 
+/// Return duration of animation in seconds.
+float AnimationDuration() { return State::scene->GetAnimation().duration; }
+
+/// Return frames per second of animation.
+float AnimationFPS() { return State::scene->GetAnimation().fps; }
+
+/// Render single frame of animation.
+void RenderAnimationFrame(unsigned int frame, Rays_Options &options) {}
+
+/// Preview single frame of animation.
+void PreviewAnimationFrame(unsigned int frame, unsigned long long time_budget,
+                           Rays_Options &options) {}
+
 } // namespace rays
 
 extern "C" { // C API
@@ -195,5 +208,19 @@ void Rays_Preview(unsigned long long time_budget, Rays_Options &options) {
 
 void Rays_SaveImage(const char *working_directory) {
     rays::SaveImage(working_directory ? working_directory : "");
+}
+
+float Rays_AnimationDuration() { return rays::AnimationDuration(); }
+
+float Rays_AnimationFPS() { return rays::AnimationFPS(); }
+
+void Rays_RenderAnimationFrame(unsigned int frame, Rays_Options &options) {
+    rays::RenderAnimationFrame(frame, options);
+}
+
+void Rays_PreviewAnimationFrame(unsigned int frame,
+                                unsigned long long time_budget,
+                                Rays_Options &options) {
+    rays::PreviewAnimationFrame(frame, time_budget, options);
 }
 }

@@ -1,4 +1,8 @@
+#include <algorithm>
+#include <cmath>
+
 #include <filesystem>
+#include <functional>
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_log.h>
@@ -39,6 +43,14 @@ struct Rays_State {
     bool is_rendering = false;
     /// Whether render is completed.
     bool is_rendered = false;
+    /// Animation duration in seconds.
+    float animation_duration = 0.0f;
+    /// Animation frames per second.
+    float animation_fps = 0.0f;
+    /// Current selected animation time in seconds.
+    float animation_time = 0.0f;
+    /// Callback invoked whenever animation slider changes.
+    std::function<void(float)> on_animation_time_changed;
     /// Rendering options.
     Rays_Options options;
 } rays_state;
@@ -184,7 +196,7 @@ void RenderImGUI() {
                           "randomly pick one of the lights.");
     ImGui::Text("Samples per pixel:");
     ImGui::SetNextItemWidth(128);
-    ImGui::SliderInt("##", &rays_state.options.samples_per_pixel, 1, 32);
+    ImGui::SliderInt("##a", &rays_state.options.samples_per_pixel, 1, 32);
     ImGui::SetItemTooltip("How many rays to cast per pixel.");
     ImGui::Separator();
     ImGui::Checkbox("Use two-level SBVH", &rays_state.options.use_bvh);
@@ -194,6 +206,18 @@ void RenderImGUI() {
                     &rays_state.options.global_illumination);
     ImGui::SetItemTooltip(
         "Whether to illuminate globally, or only compute direct lighting.");
+
+    // Animation.
+    ImGui::Separator();
+    ImGui::Text("Animation time:");
+    ImGui::SetNextItemWidth(128);
+    if (ImGui::SliderFloat("##b", &rays_state.animation_time, 0.0f,
+                           rays_state.animation_duration)) {
+        if (rays_state.on_animation_time_changed) {
+            rays_state.on_animation_time_changed(rays_state.animation_time);
+        }
+    }
+    ImGui::SetItemTooltip("Select animation frame to preview at a given time.");
 
     ImGui::End();
     ImGui::Render();
@@ -261,6 +285,23 @@ int main(int argc, char **argv) {
 
     Rays_LoadScene(argv[1], Rays_Scene_Type_CRT);
     Rays_GetResolution(&sdl_state.width, &sdl_state.height);
+
+    rays_state.animation_duration = Rays_AnimationDuration();
+    rays_state.animation_fps = Rays_AnimationFPS();
+    if (rays_state.animation_duration > 0.0f) {
+        rays_state.on_animation_time_changed = [](const float time) {
+            const unsigned int frame_count =
+                std::max(1u, static_cast<unsigned int>(
+                                 std::lround(rays_state.animation_duration *
+                                             rays_state.animation_fps)));
+            unsigned int frame =
+                std::clamp(static_cast<unsigned int>(
+                               std::lround(time * rays_state.animation_fps)),
+                           0u, frame_count - 1);
+            Rays_PreviewAnimationFrame(frame, target_frame_time_ms,
+                                       rays_state.options);
+        };
+    }
 
     if (InitializeSDL()) {
         return 1;

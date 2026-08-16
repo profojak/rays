@@ -46,6 +46,16 @@ void Rays_WaitForRender();
 void Rays_Preview(unsigned long long time_budget, Rays_Options &options);
 /// Save camera image to `output.ppm` in given working directory.
 void Rays_SaveImage(const char *working_directory);
+/// Return duration of animation in seconds.
+float Rays_AnimationDuration();
+/// Return frames per second of animation.
+float Rays_AnimationFPS();
+/// Render single frame of animation.
+void Rays_RenderAnimationFrame(unsigned int frame, Rays_Options &options);
+/// Preview single frame of animation.
+void Rays_PreviewAnimationFrame(unsigned int frame,
+                                unsigned long long time_budget,
+                                Rays_Options &options);
 }
 
 #endif // RAYS_H
