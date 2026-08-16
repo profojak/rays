@@ -51,9 +51,14 @@ export template <arithmetic T, std::size_t N> struct Vector {
             std::forward<Self>(self).data.data());
     }
 
+    /// Length of vector.
+    [[nodiscard]] T Length() const noexcept {
+        return linalg::vector_two_norm(View());
+    }
+
     /// Normalize vector.
     void Normalize() noexcept {
-        const T norm = linalg::vector_two_norm(View());
+        const T norm = Length();
         *this /= norm;
     }
 

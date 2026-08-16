@@ -8,6 +8,8 @@ struct Rays_Options {
     /// Whether to use two-level SBVH to accelerate ray-triangle
     /// intersections.
     bool use_bvh = true;
+    /// Whether to illuminate globally.
+    bool global_illumination = false;
     /// Number of samples per pixel.
     int samples_per_pixel = 1;
 };
