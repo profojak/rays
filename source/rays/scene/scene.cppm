@@ -2,8 +2,11 @@ module;
 
 #include "state/options.h"
 
+#include <algorithm>
 #include <concepts>
+#include <cstddef>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -13,10 +16,12 @@ import :animation;
 import :camera;
 import :light;
 import :material;
+import :matrix;
 import :mesh;
 import :texture;
 import :thread;
 import :type;
+import :vector;
 
 namespace rays {
 
@@ -52,13 +57,38 @@ export class Scene {
         textures_.push_back(std::move(texture));
     }
 
-    /// Set `Animation` of scene.
-    void SetAnimation(const Animation &animation) { animation_ = animation; }
+    /// Set `Animation` of scene with keyframes sorted by time.
+    void SetAnimation(const Animation &animation) {
+        Animation sorted = animation;
+        const auto SortKeyframes =
+            []<typename T>(std::vector<Keyframe<T>> &keyframes) {
+                std::ranges::sort(keyframes, {}, &Keyframe<T>::time);
+            };
+        SortKeyframes(sorted.camera.position);
+        SortKeyframes(sorted.camera.matrix);
+        animation_ = std::move(sorted);
+    }
 
     /// Return reference to `Animation`.
     template <typename Self>
     [[nodiscard]] auto &GetAnimation(this Self &&self) {
         return std::forward<Self>(self).animation_;
+    }
+
+    /// Update scene to given animation frame index.
+    void SetFrame(UInt frame) {
+        const Animation &animation = animation_;
+        if (animation.duration <= 0.0f) {
+            return;
+        }
+
+        const Float time = static_cast<Float>(frame) / animation.fps;
+        if (auto position = SampleKeyframes(animation.camera.position, time)) {
+            camera_.SetPosition(*position);
+        }
+        if (auto rotation = SampleKeyframes(animation.camera.matrix, time)) {
+            camera_.SetRotation(*rotation);
+        }
     }
 
     /// Render scene to film.
@@ -75,6 +105,36 @@ export class Scene {
     }
 
   private:
+    /// Sample keyframes at given time by linearly interpolating between
+    /// bracketing keyframes.  Return `nullopt` when there are no keyframes.
+    template <typename T>
+    [[nodiscard]] static std::optional<T>
+    SampleKeyframes(const std::vector<Keyframe<T>> &keyframes, Float time) {
+        if (keyframes.empty()) {
+            return std::nullopt;
+        }
+        if (keyframes.size() == 1 || time <= keyframes.front().time) {
+            return keyframes.front().value;
+        }
+        if (time >= keyframes.back().time) {
+            return keyframes.back().value;
+        }
+
+        // Find consecutive keyframes bracketing time.
+        for (std::size_t i = 0; i + 1 < keyframes.size(); ++i) {
+            const Keyframe<T> &a = keyframes[i];
+            const Keyframe<T> &b = keyframes[i + 1];
+            const Float span = b.time - a.time;
+            if (span <= 0.0f || time < a.time || time > b.time) {
+                continue;
+            }
+            const Float t = (time - a.time) / span;
+            return a.value * (Float{1} - t) + b.value * t;
+        }
+
+        return std::nullopt;
+    }
+
     /// Camera.
     Camera<Float> camera_;
     /// Meshes.

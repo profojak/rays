@@ -165,11 +165,17 @@ float AnimationDuration() { return State::scene->GetAnimation().duration; }
 float AnimationFPS() { return State::scene->GetAnimation().fps; }
 
 /// Render single frame of animation.
-void RenderAnimationFrame(unsigned int frame, Rays_Options &options) {}
+void RenderAnimationFrame(unsigned int frame, Rays_Options &options) {
+    State::scene->SetFrame(frame);
+    State::scene->Render(State::thread_pool, options);
+}
 
 /// Preview single frame of animation.
 void PreviewAnimationFrame(unsigned int frame, unsigned long long time_budget,
-                           Rays_Options &options) {}
+                           Rays_Options &options) {
+    State::scene->SetFrame(frame);
+    State::scene->Preview(State::thread_pool, time_budget, options);
+}
 
 } // namespace rays
 

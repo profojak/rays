@@ -300,6 +300,7 @@ int main(int argc, char **argv) {
                            0u, frame_count - 1);
             Rays_PreviewAnimationFrame(frame, target_frame_time_ms,
                                        rays_state.options);
+            FetchImageData();
         };
     }
 
