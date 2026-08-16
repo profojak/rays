@@ -21,7 +21,8 @@ export struct Triangle {
     /// Test ray against triangle with given vertex positions.
     [[nodiscard]] std::optional<TriangleIntersection3f>
     Intersect(const Ray3f &ray, const Vector3f &v0, const Vector3f &v1,
-              const Vector3f &v2) const noexcept {
+              const Vector3f &v2,
+              const bool back_face_culling = false) const noexcept {
         const Vector3f edge1 = v1 - v0;
         const Vector3f edge2 = v2 - v0;
 
@@ -31,6 +32,11 @@ export struct Triangle {
         // Determinant, zero means ray is parallel to triangle.
         const Float det = linalg::dot(edge1.View(), pvec.View());
         if (det == Float{0}) {
+            return std::nullopt;
+        }
+
+        // Back face culling.
+        if (back_face_culling && det < 0) {
             return std::nullopt;
         }
         const Float inv_det = Float{1} / det;

@@ -66,7 +66,7 @@ class SamplingIntegrator : public Integrator<T> {
         textures_ = &textures;
         options_ = &options;
 
-        bvh_.Build(meshes);
+        bvh_.Build(meshes, materials);
 
         const auto num_threads = thread_pool.Size();
         tasks_remaining_.store(num_threads, std::memory_order_relaxed);

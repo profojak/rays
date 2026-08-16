@@ -15,6 +15,7 @@ module;
 export module rays:bvh;
 
 import :bounds;
+import :material;
 import :mesh;
 import :ray;
 import :triangle;
@@ -99,9 +100,11 @@ export class BVH {
     };
 
   public:
-    /// Build two-level SBVH over given meshes.
-    void Build(const std::vector<Mesh> &meshes) {
+    /// Build two-level SBVH over given meshes and materials.
+    void Build(const std::vector<Mesh> &meshes,
+               const std::vector<Material> &materials) {
         meshes_ = &meshes;
+        materials_ = &materials;
         top_nodes_.clear();
         top_refs_.clear();
         bottom_nodes_.assign(meshes.size(), {});
@@ -143,6 +146,8 @@ export class BVH {
 
     /// Meshes.
     const std::vector<Mesh> *meshes_{nullptr};
+    /// Materials.
+    const std::vector<Material> *materials_{nullptr};
 
     /// Top-level BVH nodes over meshes.
     std::vector<Node> top_nodes_;
@@ -707,6 +712,10 @@ export class BVH {
         const Mesh &mesh = (*meshes_)[mesh_index];
         const std::vector<UInt> &leaf_refs = bottom_refs_[mesh_index];
 
+        const bool back_face_culling =
+            mesh.material_index >= 0 && materials_ != nullptr &&
+            (*materials_)[mesh.material_index].back_face_culling;
+
         Float near_t, far_t;
         if (!nodes[0].bounds.Intersect(ray, near_t, far_t))
             return;
@@ -721,7 +730,8 @@ export class BVH {
                     const Triangle &triangle = mesh.triangles[triangle_index];
                     const auto intersection = triangle.Intersect(
                         ray, mesh.vertices[triangle.a],
-                        mesh.vertices[triangle.b], mesh.vertices[triangle.c]);
+                        mesh.vertices[triangle.b], mesh.vertices[triangle.c],
+                        back_face_culling);
                     if (intersection &&
                         (!closest || intersection->t < closest->t) &&
                         intersection->t <= max_t) {

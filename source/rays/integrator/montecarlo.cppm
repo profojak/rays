@@ -377,11 +377,14 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
                     continue;
                 }
                 const auto &vertices = mesh.vertices;
+                const bool back_face_culling =
+                    mesh.material_index >= 0 &&
+                    (*this->materials_)[mesh.material_index].back_face_culling;
                 for (UInt j = 0; j < mesh.triangles.size(); ++j) {
                     const auto &triangle = mesh.triangles[j];
                     const auto intersection = triangle.Intersect(
                         ray, vertices[triangle.a], vertices[triangle.b],
-                        vertices[triangle.c]);
+                        vertices[triangle.c], back_face_culling);
                     if (intersection &&
                         (!closest || intersection->t < closest->t)) {
                         closest = intersection;

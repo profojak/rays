@@ -12,6 +12,7 @@ export module rays:preview;
 
 import :integrator;
 import :light;
+import :material;
 import :ray;
 import :sphere;
 import :type;
@@ -110,11 +111,14 @@ class PreviewIntegrator : public SamplingIntegrator<T> {
             for (UInt i = 0; i < this->meshes_->size(); ++i) {
                 const auto &mesh = (*this->meshes_)[i];
                 const auto &vertices = mesh.vertices;
+                const bool back_face_culling =
+                    mesh.material_index >= 0 &&
+                    (*this->materials_)[mesh.material_index].back_face_culling;
                 for (UInt j = 0; j < mesh.triangles.size(); ++j) {
                     const auto &triangle = mesh.triangles[j];
                     const auto intersection = triangle.Intersect(
                         ray, vertices[triangle.a], vertices[triangle.b],
-                        vertices[triangle.c]);
+                        vertices[triangle.c], back_face_culling);
                     if (intersection &&
                         (!triangle_hit || intersection->t < triangle_hit->t)) {
                         triangle_hit = intersection;

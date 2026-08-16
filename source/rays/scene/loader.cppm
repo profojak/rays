@@ -298,6 +298,7 @@ export class CRTLoader : public Loader {
                 std::variant<Vector3f, UInt> albedo{Vector3f{1.0f}};
                 bool smooth_shading;
                 Float index_of_refraction = 1.5f;
+                bool back_face_culling = false;
 
                 // Type.
                 if (const auto &type_value = material["type"];
@@ -364,8 +365,16 @@ export class CRTLoader : public Loader {
                     index_of_refraction = ior_value.GetFloat();
                 }
 
-                scene->AddMaterial(std::move(Material{
-                    type, albedo, smooth_shading, index_of_refraction}));
+                // Back face culling.
+                if (const auto &back_face_culling_value =
+                        material["back_face_culling"];
+                    back_face_culling_value.IsBool()) {
+                    back_face_culling = back_face_culling_value.GetBool();
+                }
+
+                scene->AddMaterial(std::move(
+                    Material{type, albedo, smooth_shading, index_of_refraction,
+                             back_face_culling}));
             }
         }
 
