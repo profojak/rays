@@ -123,7 +123,7 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
             return SampleRefractive(ray, background, depth, hit, normal,
                                     materials[mesh.material_index]);
         case Material::Type::Diffuse:
-            return SampleDiffuse(hit, normal, background, albedo);
+            return SampleDiffuse(hit, normal, background, albedo, depth);
         }
         return background;
     }
@@ -258,16 +258,17 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
     }
 
     /// Diffuse material.
-    [[nodiscard]] Vector3f
-    SampleDiffuse(const Vector3f &hit, const Vector3f &normal,
-                  const Vector3f &background,
-                  const Vector3f &albedo) const noexcept {
-        if (this->lights_->empty()) {
+    [[nodiscard]] Vector3f SampleDiffuse(const Vector3f &hit,
+                                         const Vector3f &normal,
+                                         const Vector3f &background,
+                                         const Vector3f &albedo,
+                                         const UInt depth) const noexcept {
+        if (this->lights_->empty() && !this->options_->global_illumination) {
             return albedo;
         }
 
         // Contribution of single light.
-        const auto sample_light = [&](const auto &light) -> Vector3f {
+        const auto SampleLight = [&](const auto &light) -> Vector3f {
             Vector3f light_direction = light->Position() - hit;
             const Float distance =
                 linalg::vector_two_norm(light_direction.View());
@@ -287,18 +288,40 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
             return albedo * light->Intensity() / sphere_area * cosine;
         };
 
+        // Direct lighting.
+        Vector3f radiance{0.0f};
         if (this->options_->sample_all_lights) {
-            Vector3f radiance{0.0f};
             for (const auto &light : *this->lights_) {
-                radiance += sample_light(light);
+                radiance += SampleLight(light);
             }
-            return radiance;
-        } else {
+        } else if (!this->lights_->empty()) {
             const auto &light =
                 (*this->lights_)[Random::Range(this->lights_->size())];
-            return sample_light(light) *
-                   static_cast<Float>(this->lights_->size());
+            radiance =
+                SampleLight(light) * static_cast<Float>(this->lights_->size());
         }
+
+        // Global illumination.
+        if (this->options_->global_illumination && depth < max_bounces_) {
+            // Orthonormal basis around hit normal.
+            const Vector3f helper = std::abs(normal[0]) < 0.9f
+                                        ? Vector3f{1.0f, 0.0f, 0.0f}
+                                        : Vector3f{0.0f, 1.0f, 0.0f};
+            Vector3f tangent = Vector3f::Cross(helper, normal);
+            tangent.Normalize();
+            const Vector3f bitangent = Vector3f::Cross(normal, tangent);
+
+            // Transform local cosine-weighted sample to world space.
+            const Vector3f sample = Random::CosineHemisphere();
+            const Vector3f direction = tangent * sample[0] +
+                                       bitangent * sample[1] +
+                                       normal * sample[2];
+
+            radiance +=
+                albedo * Sample(Ray3f{hit + normal * Epsilon, direction},
+                                background, depth + 1);
+        }
+        return radiance;
     }
 
     /// Generate primary ray for pixel at film coordinates.

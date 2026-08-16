@@ -190,6 +190,10 @@ void RenderImGUI() {
     ImGui::Checkbox("Use two-level SBVH", &rays_state.options.use_bvh);
     ImGui::SetItemTooltip("Use two-level bounding volume hierarchy to "
                           "accelerate ray-triangle intersections.");
+    ImGui::Checkbox("Global illumination",
+                    &rays_state.options.global_illumination);
+    ImGui::SetItemTooltip(
+        "Whether to illuminate globally, or only compute direct lighting.");
 
     ImGui::End();
     ImGui::Render();

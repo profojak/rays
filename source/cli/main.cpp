@@ -16,7 +16,10 @@ int main(int argc, char *argv[]) {
 
     rays::LoadScene(argv[1], Rays_Scene_Type_CRT);
 
-    Rays_Options options{.sample_all_lights = true, .samples_per_pixel = 1};
+    Rays_Options options{.sample_all_lights = false,
+                         .use_bvh = true,
+                         .global_illumination = true,
+                         .samples_per_pixel = 64};
 
     auto start = std::chrono::high_resolution_clock::now();
     std::println("Rendering...");
