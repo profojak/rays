@@ -33,6 +33,32 @@ TEST_CASE("`Triangle::Intersect` hits triangle") {
     CHECK(hit->uv[1] == doctest::Approx(0.5f));
 }
 
+TEST_CASE("`Triangle::Intersect` hits front face with back face culling") {
+    const rays::Ray3f ray{{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}};
+
+    const auto hit = triangle.Intersect(ray, v0, v1, v2, true);
+    REQUIRE(hit.has_value());
+    CHECK(hit->t == doctest::Approx(1.0f));
+    CHECK(hit->uv[0] == doctest::Approx(0.25f));
+    CHECK(hit->uv[1] == doctest::Approx(0.5f));
+}
+
+TEST_CASE("`Triangle::Intersect` culls back face") {
+    const rays::Ray3f ray{{0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, 1.0f}};
+
+    CHECK_FALSE(triangle.Intersect(ray, v0, v1, v2, true));
+}
+
+TEST_CASE("`Triangle::Intersect` hits back face without culling") {
+    const rays::Ray3f ray{{0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, 1.0f}};
+
+    const auto hit = triangle.Intersect(ray, v0, v1, v2, false);
+    REQUIRE(hit.has_value());
+    CHECK(hit->t == doctest::Approx(1.0f));
+    CHECK(hit->uv[0] == doctest::Approx(0.25f));
+    CHECK(hit->uv[1] == doctest::Approx(0.5f));
+}
+
 TEST_CASE("`Triangle::Intersect` misses triangle behind origin") {
     const rays::Ray3f ray{{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}};
 
