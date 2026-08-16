@@ -208,16 +208,19 @@ void RenderImGUI() {
         "Whether to illuminate globally, or only compute direct lighting.");
 
     // Animation.
-    ImGui::Separator();
-    ImGui::Text("Animation time:");
-    ImGui::SetNextItemWidth(128);
-    if (ImGui::SliderFloat("##b", &rays_state.animation_time, 0.0f,
-                           rays_state.animation_duration)) {
-        if (rays_state.on_animation_time_changed) {
-            rays_state.on_animation_time_changed(rays_state.animation_time);
+    if (rays_state.animation_duration > 0.0f) {
+        ImGui::Separator();
+        ImGui::Text("Animation time:");
+        ImGui::SetNextItemWidth(128);
+        if (ImGui::SliderFloat("##b", &rays_state.animation_time, 0.0f,
+                               rays_state.animation_duration)) {
+            if (rays_state.on_animation_time_changed) {
+                rays_state.on_animation_time_changed(rays_state.animation_time);
+            }
         }
+        ImGui::SetItemTooltip(
+            "Select animation frame to preview at a given time.");
     }
-    ImGui::SetItemTooltip("Select animation frame to preview at a given time.");
 
     ImGui::End();
     ImGui::Render();
