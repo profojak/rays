@@ -18,6 +18,7 @@ import :light;
 import :material;
 import :matrix;
 import :mesh;
+import :point;
 import :texture;
 import :thread;
 import :type;
@@ -66,6 +67,10 @@ export class Scene {
             };
         SortKeyframes(sorted.camera.position);
         SortKeyframes(sorted.camera.matrix);
+        for (auto &object : sorted.objects)
+            SortKeyframes(object.position);
+        for (auto &light : sorted.lights)
+            SortKeyframes(light.position);
         animation_ = std::move(sorted);
     }
 
@@ -88,6 +93,22 @@ export class Scene {
         }
         if (auto rotation = SampleKeyframes(animation.camera.matrix, time)) {
             camera_.SetRotation(*rotation);
+        }
+        for (const auto &object : animation.objects) {
+            if (object.index >= meshes_.size()) {
+                continue;
+            }
+            const Vector3f offset =
+                SampleKeyframes(object.position, time).value_or(Vector3f{});
+            meshes_[object.index].position = offset;
+        }
+        for (const auto &light : animation.lights) {
+            if (light.index >= lights_.size()) {
+                continue;
+            }
+            if (auto position = SampleKeyframes(light.position, time)) {
+                lights_[light.index]->SetPosition(Point3f{*position});
+            }
         }
     }
 

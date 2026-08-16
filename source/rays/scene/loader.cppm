@@ -508,6 +508,94 @@ export class CRTLoader : public Loader {
                 }
             }
 
+            // Objects.
+            if (const auto &objects = animation["objects"]; objects.IsArray()) {
+                for (const auto &object : objects.GetArray()) {
+                    if (!object.IsObject()) {
+                        continue;
+                    }
+
+                    ObjectAnimation object_animation;
+                    if (const auto &index_value = object["index"];
+                        index_value.IsUint()) {
+                        object_animation.index = index_value.GetUint();
+                    }
+
+                    // Position keyframes.
+                    if (const auto &position = object["position"];
+                        position.IsArray()) {
+                        for (const auto &keyframe : position.GetArray()) {
+                            if (!keyframe.IsObject()) {
+                                continue;
+                            }
+
+                            Float time = -1.0f;
+                            Vector3f value{};
+                            if (const auto &time_value = keyframe["time"];
+                                time_value.IsNumber()) {
+                                time = time_value.GetFloat();
+                            }
+                            if (const auto &value_value = keyframe["value"];
+                                value_value.IsArray() &&
+                                value_value.Size() == 3) {
+                                value = Vector3f{value_value[0].GetFloat(),
+                                                 value_value[1].GetFloat(),
+                                                 value_value[2].GetFloat()};
+                            }
+                            object_animation.position.push_back(
+                                Keyframe<Vector3f>{time, value});
+                        }
+                    }
+
+                    scene_animation.objects.push_back(
+                        std::move(object_animation));
+                }
+            }
+
+            // Lights.
+            if (const auto &lights = animation["lights"]; lights.IsArray()) {
+                for (const auto &light : lights.GetArray()) {
+                    if (!light.IsObject()) {
+                        continue;
+                    }
+
+                    LightAnimation light_animation;
+                    if (const auto &index_value = light["index"];
+                        index_value.IsUint()) {
+                        light_animation.index = index_value.GetUint();
+                    }
+
+                    // Position keyframes.
+                    if (const auto &position = light["position"];
+                        position.IsArray()) {
+                        for (const auto &keyframe : position.GetArray()) {
+                            if (!keyframe.IsObject()) {
+                                continue;
+                            }
+
+                            Float time = -1.0f;
+                            Vector3f value{};
+                            if (const auto &time_value = keyframe["time"];
+                                time_value.IsNumber()) {
+                                time = time_value.GetFloat();
+                            }
+                            if (const auto &value_value = keyframe["value"];
+                                value_value.IsArray() &&
+                                value_value.Size() == 3) {
+                                value = Vector3f{value_value[0].GetFloat(),
+                                                 value_value[1].GetFloat(),
+                                                 value_value[2].GetFloat()};
+                            }
+                            light_animation.position.push_back(
+                                Keyframe<Vector3f>{time, value});
+                        }
+                    }
+
+                    scene_animation.lights.push_back(
+                        std::move(light_animation));
+                }
+            }
+
             scene->SetAnimation(scene_animation);
         }
 

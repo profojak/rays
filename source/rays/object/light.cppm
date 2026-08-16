@@ -23,6 +23,8 @@ export class Light {
     virtual Float Intensity() const { return intensity_; }
     /// Return light position.
     virtual Point3f Position() const { return position_; }
+    /// Set light position.
+    virtual void SetPosition(const Point3f &position) { position_ = position; }
 
   private:
     /// Light intensity.
@@ -41,6 +43,12 @@ export class PointLight : public Light {
     /// Return light sphere for visualization.
     template <typename Self> [[nodiscard]] auto &GetSphere(this Self &&self) {
         return std::forward<Self>(self).sphere_;
+    }
+
+    /// Set light position.
+    void SetPosition(const Point3f &position) override {
+        Light::SetPosition(position);
+        sphere_.center = position;
     }
 
   private:

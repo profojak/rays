@@ -26,6 +26,22 @@ export struct CameraAnimation {
     std::vector<Keyframe<Matrix3f>> matrix;
 };
 
+/// Animation of single object.
+export struct ObjectAnimation {
+    /// Index of animated mesh in scene.
+    UInt index{0};
+    /// Keyframes of object position offset.
+    std::vector<Keyframe<Vector3f>> position;
+};
+
+/// Animation of single light.
+export struct LightAnimation {
+    /// Index of animated light in scene.
+    UInt index{0};
+    /// Keyframes of light position.
+    std::vector<Keyframe<Vector3f>> position;
+};
+
 /// Animation data for scene.
 export class Animation {
   public:
@@ -35,6 +51,10 @@ export class Animation {
     Float fps = 0.0f;
     /// Camera animation.
     CameraAnimation camera;
+    /// Object animations.
+    std::vector<ObjectAnimation> objects;
+    /// Light animations.
+    std::vector<LightAnimation> lights;
 };
 
 } // namespace rays
