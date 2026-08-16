@@ -18,10 +18,12 @@ module;
 
 export module rays:loader;
 
+import :animation;
 import :camera;
 import :image;
 import :light;
 import :material;
+import :matrix;
 import :mesh;
 import :scene;
 import :texture;
@@ -435,6 +437,78 @@ export class CRTLoader : public Loader {
                 mesh.RecalculateNormals();
                 scene->AddMesh(std::move(mesh));
             }
+        }
+
+        // Animation.
+        if (const auto &animation = document["animation"];
+            animation.IsObject()) {
+            Animation scene_animation;
+
+            // Duration & frames per second.
+            if (const auto &duration = animation["duration"];
+                duration.IsNumber()) {
+                scene_animation.duration = duration.GetFloat();
+            }
+            if (const auto &fps = animation["fps"]; fps.IsNumber()) {
+                scene_animation.fps = fps.GetFloat();
+            }
+
+            // Camera.
+            if (const auto &camera = animation["camera"]; camera.IsObject()) {
+
+                // Position keyframes.
+                if (const auto &position = camera["position"];
+                    position.IsArray()) {
+                    for (const auto &keyframe : position.GetArray()) {
+                        if (!keyframe.IsObject()) {
+                            continue;
+                        }
+
+                        Float time = -1.0f;
+                        Vector3f value{};
+                        if (const auto &time_value = keyframe["time"];
+                            time_value.IsNumber()) {
+                            time = time_value.GetFloat();
+                        }
+                        if (const auto &value_value = keyframe["value"];
+                            value_value.IsArray() && value_value.Size() == 3) {
+                            value = Vector3f{value_value[0].GetFloat(),
+                                             value_value[1].GetFloat(),
+                                             value_value[2].GetFloat()};
+                        }
+                        scene_animation.camera.position.push_back(
+                            Keyframe<Vector3f>{time, value});
+                    }
+                }
+
+                // Matrix keyframes.
+                if (const auto &matrix = camera["matrix"]; matrix.IsArray()) {
+                    for (const auto &keyframe : matrix.GetArray()) {
+                        if (!keyframe.IsObject()) {
+                            continue;
+                        }
+
+                        Float time = -1.0f;
+                        Matrix3f value{};
+                        if (const auto &time_value = keyframe["time"];
+                            time_value.IsNumber()) {
+                            time = time_value.GetFloat();
+                        }
+                        if (const auto &value_value = keyframe["value"];
+                            value_value.IsArray() && value_value.Size() == 9) {
+                            std::array<Float, 9> data{};
+                            for (std::size_t i = 0; i < 9; ++i) {
+                                data[i] = value_value[i].GetFloat();
+                            }
+                            value = Matrix3f{data}.Transposed();
+                        }
+                        scene_animation.camera.matrix.push_back(
+                            Keyframe<Matrix3f>{time, value});
+                    }
+                }
+            }
+
+            scene->SetAnimation(scene_animation);
         }
 
         return scene;

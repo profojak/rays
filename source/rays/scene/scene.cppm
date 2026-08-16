@@ -9,6 +9,7 @@ module;
 
 export module rays:scene;
 
+import :animation;
 import :camera;
 import :light;
 import :material;
@@ -51,6 +52,15 @@ export class Scene {
         textures_.push_back(std::move(texture));
     }
 
+    /// Set `Animation` of scene.
+    void SetAnimation(const Animation &animation) { animation_ = animation; }
+
+    /// Return reference to `Animation`.
+    template <typename Self>
+    [[nodiscard]] auto &GetAnimation(this Self &&self) {
+        return std::forward<Self>(self).animation_;
+    }
+
     /// Render scene to film.
     void Render(ThreadPool &thread_pool, Rays_Options &options) {
         camera_.Render(thread_pool, meshes_, lights_, materials_, textures_,
@@ -75,6 +85,8 @@ export class Scene {
     std::vector<Material> materials_;
     /// Textures.
     std::vector<Texture> textures_;
+    /// Animation.
+    Animation animation_;
 };
 
 } // namespace rays
