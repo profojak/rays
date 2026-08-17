@@ -125,11 +125,10 @@ void Preview(unsigned long long time_budget, Rays_Options &options) {
     State::scene->Preview(State::thread_pool, time_budget, options);
 }
 
-/// Save camera image to `output.ppm` in given working directory.
-void SaveImage(const std::string &working_directory) {
-    if (working_directory.empty()) {
-        std::println(std::cerr,
-                     "Failed to save image: empty working directory!");
+/// Save camera image to given file path.
+void SaveImageTo(const std::string &file_path) {
+    if (file_path.empty()) {
+        std::println(std::cerr, "Failed to save image: empty file path!");
         return;
     }
 
@@ -137,8 +136,7 @@ void SaveImage(const std::string &working_directory) {
     const Vector2u resolution = film.GetResolution();
     const auto *image = static_cast<const UChar *>(film.ImageData());
 
-    const std::filesystem::path path =
-        std::filesystem::path(working_directory) / "output.ppm";
+    const std::filesystem::path path(file_path);
     std::ofstream file{path, std::ios::binary};
     if (!file) {
         std::println(std::cerr, "Failed to open output file: {}!",
@@ -156,6 +154,18 @@ void SaveImage(const std::string &working_directory) {
         }
     }
     std::println("Saved image to {}", path.string());
+}
+
+/// Save camera image to `output.ppm` in given working directory.
+void SaveImage(const std::string &working_directory) {
+    if (working_directory.empty()) {
+        std::println(std::cerr,
+                     "Failed to save image: empty working directory!");
+        return;
+    }
+
+    SaveImageTo(
+        (std::filesystem::path(working_directory) / "output.ppm").string());
 }
 
 /// Return duration of animation in seconds.
