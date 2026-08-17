@@ -27,6 +27,7 @@
             llvm.clang-tools
             pkgs.cmake
             pkgs.ninja
+            pkgs.ffmpeg
           ] ++ sdl-runtime;
 
           shellHook = ''
