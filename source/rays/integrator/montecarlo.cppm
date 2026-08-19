@@ -72,7 +72,7 @@ class MonteCarloIntegrator : public SamplingIntegrator<T> {
                                   const UInt depth) const noexcept {
         const auto intersection = Intersect(ray, background);
         if (!intersection) {
-            return depth == 0 ? background : Vector3f{0.0f};
+            return background;
         }
 
         const auto &mesh = (*this->meshes_)[(*intersection).mesh_index];
